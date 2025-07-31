@@ -1,0 +1,19 @@
+{
+  "name": "belote",
+  "version": "1.0.0",
+  "description": "belote en ligne!",
+  "license": "ISC",
+  "author": "Izoret",
+  "type": "module",
+  "main": "server.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "uuid": "^11.1.0",
+    "ws": "^8.18.3"
+  }
+}
