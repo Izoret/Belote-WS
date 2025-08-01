@@ -49,6 +49,9 @@ function startDealingAnimation(cardCount, dealerPos) {
         { x: 15, y: 50 }   // Ouest
     ];
 
+    // Tailles des cartes selon la position
+    const cardSizes = ['85px', '50px', '65px', '50px']; // Sud, Ouest, Nord, Est
+
     // Créer les cartes volantes
     for (let i = 0; i < cardCount * 4; i++) {
         const playerIndex = (dealerPos + Math.floor(i / cardCount) + 1) % 4;
@@ -57,7 +60,8 @@ function startDealingAnimation(cardCount, dealerPos) {
             id: `card-${Date.now()}-${i}`,
             start: positions[dealerPos],
             end: positions[playerIndex],
-            progress: 0
+            progress: 0,
+            targetSize: cardSizes[playerIndex]
         });
     }
 
@@ -174,7 +178,8 @@ function startDealingAnimation(cardCount, dealerPos) {
       :style="{
         left: `${card.start.x + (card.end.x - card.start.x) * card.progress}%`,
         top: `${card.start.y + (card.end.y - card.start.y) * card.progress}%`,
-        opacity: card.progress < 0.9 ? 1 : 1 - ((card.progress - 0.9) * 10)
+        opacity: card.progress < 0.9 ? 1 : 1 - ((card.progress - 0.9) * 10),
+        width: card.targetSize
       }"
     >
       <img :src="getCardImage()" class="card-hidden" />
@@ -297,6 +302,8 @@ function startDealingAnimation(cardCount, dealerPos) {
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
   border: 1px solid rgba(255,255,255,0.1);
   transition: all 0.2s ease;
+  width: 100%;
+  height: auto;
 }
 
 /* Cartes du joueur du haut (inversées) */
@@ -488,7 +495,6 @@ function startDealingAnimation(cardCount, dealerPos) {
   position: absolute;
   transform: translate(-50%, -50%);
   transition: all 0.1s linear;
-  width: 8%;
   z-index: 1001;
 }
 
@@ -506,7 +512,7 @@ function startDealingAnimation(cardCount, dealerPos) {
 
 .deck-card {
   position: absolute;
-  width: 100%;
+  width: 50px;
   height: auto;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
