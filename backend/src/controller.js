@@ -26,6 +26,9 @@ export async function handleMessage(ws, message) {
             case "leave_room":
                 handleDisconnect(ws);
                 break;
+            case "end_game":
+                await service.handleEndGame(ws, payload);
+                break;
             default:
                 throw new Error('Type de message non reconnu');
         }

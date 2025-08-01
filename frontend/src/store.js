@@ -15,9 +15,9 @@ export const store = reactive(
     isInLobby: false,
     isInGame: false,
     
-    gameData: {
+    gameState: {
+        myHand: [],
         players: [],
-        atoutPropose: null,
     },
 })
 
