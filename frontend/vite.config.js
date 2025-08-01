@@ -6,4 +6,5 @@ export default defineConfig({
     server: {
         allowedHosts: ['polliwog-noted-malamute.ngrok-free.app']
     },
+    base: './',
 })
