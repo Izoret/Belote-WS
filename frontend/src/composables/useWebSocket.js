@@ -23,18 +23,27 @@ export function useWebSocket() {
         const { type, payload, message } = data; // message pour les erreurs
 
         switch (type) {
-          case 'room_update':
-            store.playersInRoom = payload.players;
-            store.chatMessages = payload.chat;
-            store.isInLobby = true;
-            break;
-          case 'new_message': // Pour le futur chat
-             store.chatMessages.push(payload);
-             break;
-          case 'error':
-            store.errorMessage = message;
-            store.isInLobby = false;
-            break;
+            case 'room_update':
+                store.playersInRoom = payload.players;
+                store.chatMessages = payload.chat;
+                store.isInLobby = true;
+                break;
+            case 'new_message':
+                store.chatMessages.push(payload);
+                break;
+            case 'error':
+                store.errorMessage = message;
+                store.isInLobby = false;
+                break;
+            case 'connection_ready':
+                store.myId = payload.id;
+                break;
+            case 'game_started':
+                store.gameData.players = payload.players;
+                store.gameData.atoutPropose = payload.atoutPropose;
+                store.isInGame = true;
+                store.isInLobby = false;
+                break;
         }
       };
 

@@ -17,7 +17,7 @@ const postMessage = () => {
 };
 
 const startGame = () => {
-  alert('La partie commence ! (Logique de jeu à implémenter)');
+    sendMessage('start_game', {}); 
 };
 
 watch(
@@ -95,7 +95,7 @@ watch(
 .chat-box {
     flex-grow: 1;
     overflow-y: auto;
-    max-height: 300px;
+    max-height: 400px;
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 10px;

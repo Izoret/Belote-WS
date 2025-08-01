@@ -2,12 +2,23 @@ import { reactive, computed } from 'vue'
 
 export const store = reactive(
 {
+    myId: null,
     playerName: '',
+    
     roomCode: '',
     playersInRoom: [],
+    
     chatMessages: [],
+    
     errorMessage: '',
+    
     isInLobby: false,
+    isInGame: false,
+    
+    gameData: {
+        players: [],
+        atoutPropose: null,
+    },
 })
 
 export const computedStore =
