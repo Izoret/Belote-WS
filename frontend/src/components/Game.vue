@@ -32,7 +32,7 @@ const getCardImageUrl = (card) => {
   if (!card) return '/img/cards/hidden.png';
   const suitName = card.suit;
   const valueName = card.value;
-  return `/img/cards/${valueName}_of_${suitName}.png`;
+  return `img/cards/${valueName}_of_${suitName}.png`;
 };
 </script>
 
