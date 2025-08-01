@@ -15,7 +15,7 @@ const orderedPlayers = computed(() => {
 })
 
 const getCardImage = (card) => {
-    if (!card) return '/img/cards/hidden.png';
+    if (!card) return 'img/cards/hidden.png';
     else return `img/cards/${card.value}_of_${card.suit}.png`;
 };
 </script>
