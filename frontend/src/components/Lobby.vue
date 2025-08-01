@@ -1,10 +1,12 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, nextTick, watch } from 'vue';
 import { store, computedStore } from '../store.js';
 import { useWebSocket } from '../composables/useWebSocket.js';
 
 const { sendMessage } = useWebSocket();
 const newMessage = ref('');
+
+const chatBoxRef = ref(null);
 
 const postMessage = () => {
   const text = newMessage.value.trim();
@@ -17,6 +19,17 @@ const postMessage = () => {
 const startGame = () => {
   alert('La partie commence ! (Logique de jeu à implémenter)');
 };
+
+watch(
+  () => store.chatMessages,
+  async () => {
+    await nextTick();
+    if (chatBoxRef.value) {
+      chatBoxRef.value.scrollTop = chatBoxRef.value.scrollHeight;
+    }
+  },
+  { deep: true }
+);
 </script>
 
 <template>
@@ -44,7 +57,7 @@ const startGame = () => {
 
     <div class="chat-area">
         <h3>Chat du salon</h3>
-        <div class="chat-box">
+        <div ref="chatBoxRef" class="chat-box">
             <div v-for="(msg, index) in store.chatMessages" :key="index" class="chat-message">
                 <i>{{ msg.timestamp }} -</i> <strong>{{ msg.author }}:</strong> {{ msg.text }}
             </div>
