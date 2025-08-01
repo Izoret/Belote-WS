@@ -18,6 +18,12 @@ export const store = reactive(
     gameState: {
         myHand: [],
         players: [],
+        dealerId: null,
+        dealingAnimation: {
+            active: false,
+            cardCount: 0,
+            dealerPosition: null
+        }
     },
 })
 

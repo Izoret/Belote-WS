@@ -1,5 +1,6 @@
 import { rooms } from './app.js';
 import * as logic from './logic.js';
+import { broadcastDealingAnimation } from './animationController.js';
 
 export async function handleJoinRoom(ws, { roomCode, playerName }) {
     ws.roomCode = roomCode;
@@ -77,6 +78,7 @@ export async function handleStartGame(ws) {
 
     room.game = {
         deck,
+        dealerId: ws.id,
         players: room.players.map(p => ({ 
             id: p.id,
             name: p.name,
@@ -85,16 +87,20 @@ export async function handleStartGame(ws) {
         }))
     }
 
-    //console.log(JSON.stringify(room));
-
     broadcastGameState(roomCode)
 
     await new Promise(resolve => setTimeout(resolve, 1000))
+
+    broadcastDealingAnimation(roomCode, 3);
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     logic.dealCards(room.game.players, room.game.deck, 3)
     broadcastGameState(roomCode)
 
     await new Promise(resolve => setTimeout(resolve, 2000))
+
+    broadcastDealingAnimation(roomCode, 2);
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     logic.dealCards(room.game.players, room.game.deck, 2)
     broadcastGameState(roomCode)
@@ -220,7 +226,10 @@ export function broadcastGameState(roomCode) {
 
         player.ws.send(JSON.stringify({
             type: 'game_state_update',
-            payload: personalGameState
+            payload: {
+                ...personalGameState,
+                dealerId: fullGameState.dealerId
+            }
         }));
     });
 }

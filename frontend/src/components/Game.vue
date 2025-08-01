@@ -1,8 +1,10 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { store } from '../store.js';
 import { useWebSocket } from '../composables/useWebSocket.js';
 const { sendMessage } = useWebSocket();
+
+const dealingCards = ref([]);
 
 // Le but est de toujours nous afficher en bas
 const orderedPlayers = computed(() => {
@@ -23,6 +25,58 @@ const getCardImage = (card) => {
 
 function endGame() {
     sendMessage('end_game', {});
+}
+
+const dealerPosition = computed(() => {
+    if (!store.gameState.dealerId || !orderedPlayers.value.length) return null;
+    return orderedPlayers.value.findIndex(p => p.id === store.gameState.dealerId);
+});
+
+watch(() => store.gameState.dealingAnimation, (newVal) => {
+    if (newVal.active) {
+        startDealingAnimation(newVal.cardCount, newVal.dealerPosition);
+    }
+});
+
+function startDealingAnimation(cardCount, dealerPos) {
+    dealingCards.value = [];
+
+    // Positions des joueurs (nord, est, sud, ouest)
+    const positions = [
+        { x: 50, y: 85 },  // Nord
+        { x: 85, y: 50 },  // Est
+        { x: 50, y: 15 },  // Sud
+        { x: 15, y: 50 }   // Ouest
+    ];
+
+    // Créer les cartes volantes
+    for (let i = 0; i < cardCount * 4; i++) {
+        const playerIndex = (dealerPos + Math.floor(i / cardCount) + 1) % 4;
+
+        dealingCards.value.push({
+            id: `card-${Date.now()}-${i}`,
+            start: positions[dealerPos],
+            end: positions[playerIndex],
+            progress: 0
+        });
+    }
+
+    // Animer progressivement
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += 0.02;
+        dealingCards.value = dealingCards.value.map(card => ({
+            ...card,
+            progress: Math.min(progress, 1)
+        }));
+
+        if (progress >= 1) {
+            clearInterval(interval);
+            setTimeout(() => {
+                dealingCards.value = [];
+            }, 500);
+        }
+    }, 20);
 }
 </script>
 
@@ -109,6 +163,39 @@ function endGame() {
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+    <div class="flying-cards">
+    <div
+      v-for="card in dealingCards"
+      :key="card.id"
+      class="flying-card"
+      :style="{
+        left: `${card.start.x + (card.end.x - card.start.x) * card.progress}%`,
+        top: `${card.start.y + (card.end.y - card.start.y) * card.progress}%`,
+        opacity: card.progress < 0.9 ? 1 : 1 - ((card.progress - 0.9) * 10)
+      }"
+    >
+      <img :src="getCardImage()" class="card-hidden" />
+    </div>
+  </div>
+
+<div 
+    v-if="dealerPosition !== null" 
+    class="dealer-deck"
+    :class="[
+      'player-' + ['south', 'west', 'north', 'east'][dealerPosition]
+    ]"
+  >
+    <div class="deck-cards">
+      <img 
+        v-for="n in 5" 
+        :key="n" 
+        :src="getCardImage()" 
+        class="deck-card" 
+        :style="{ zIndex: n }"
+      />
     </div>
   </div>
 </template>
@@ -384,5 +471,73 @@ function endGame() {
   .atout-card {
     width: 60px;
   }
+}
+
+/* Animation des cartes volantes */
+.flying-cards {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.flying-card {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: all 0.1s linear;
+  width: 8%;
+  z-index: 1001;
+}
+
+/* Style du deck */
+.dealer-deck {
+  position: absolute;
+  z-index: 50;
+}
+
+.deck-cards {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.deck-card {
+  position: absolute;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* Positionnement selon la position du donneur */
+.player-south .dealer-deck {
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10%;
+}
+
+.player-north .dealer-deck {
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10%;
+}
+
+.player-west .dealer-deck {
+  top: 50%;
+  left: 10%;
+  transform: translateY(-50%);
+  width: 7%;
+}
+
+.player-east .dealer-deck {
+  top: 50%;
+  right: 10%;
+  transform: translateY(-50%);
+  width: 7%;
 }
 </style>
