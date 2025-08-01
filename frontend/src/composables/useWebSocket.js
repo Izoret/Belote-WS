@@ -10,7 +10,7 @@ export function useWebSocket() {
     }
     
     return new Promise((resolve, reject) => {
-      socket = new WebSocket('ws://localhost:8080');
+      socket = new WebSocket(process.env.SERVER_WS_URL);
 
       socket.onopen = () => {
         console.log('🔗 Connecté au serveur WebSocket !');
