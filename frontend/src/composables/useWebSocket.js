@@ -33,7 +33,6 @@ export function useWebSocket() {
                 break;
             case 'error':
                 store.errorMessage = message;
-                store.isInLobby = false;
                 break;
             case 'connection_ready':
                 store.myId = payload.id;
