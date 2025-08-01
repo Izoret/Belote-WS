@@ -69,26 +69,36 @@ export async function handleStartGame(ws) {
 
     const team1Count = room.players.filter(p => p.team === 1).length;
     const team2Count = room.players.filter(p => p.team === 2).length;
-
     if (team1Count !== 2 || team2Count !== 2) throw new Error("Les équipes ne sont pas équilibrées (2 Bleu / 2 Rouge) !");
 
     console.log(`Début de partie dans la room ${roomCode} !!`);
 
     const deck = logic.shuffleDeck(logic.createDeck());
-    const atoutPropose = deck.pop();
 
     room.game = {
         deck,
-        atoutPropose,
-        players: room.players.map(p => ({ id: p.id, name: p.name, team: p.team }))
-    };
+        players: room.players.map(p => ({ 
+            id: p.id,
+            name: p.name,
+            team: p.team,
+            hand: []
+        }))
+    }
 
-    broadcastGameStart(roomCode);
+    broadcastGameState(roomCode)
+
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    logic.dealCards(room.game.players, room.game.deck, 3)
+    broadcastGameState(roomCode)
+
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    logic.dealCards(room.game.players, room.game.deck, 2)
+    broadcastGameState(roomCode)
 }
 
 export async function handleReconnect(ws, { oldId }) {
-    console.log('TRY HANDLE RECO of old ' + oldId);
-
     let room = null;
     let oldPlayer = null;
     let roomCode = null;
@@ -166,17 +176,35 @@ export function broadcastChatMsg(roomCode, messagePayload) {
     });
 }
 
-export function broadcastGameStart(roomCode) {
+export function broadcastGameState(roomCode) {
     const room = rooms.get(roomCode);
     if (!room || !room.game) return;
 
+    const fullGameState = room.game
+
     room.players.forEach(player => {
+        const personalGameState = {
+            myHand: [],
+            players: []
+        };
+
+        const myPlayerState = fullGameState.players.find(p => p.id === player.id);
+        if (myPlayerState) {
+            personalGameState.myHand = myPlayerState.hand;
+        }
+
+        personalGameState.players = fullGameState.players.map(p => {
+            return {
+                id: p.id,
+                name: p.name,
+                team: p.team,
+                handSize: p.hand.length
+            };
+        });
+
         player.ws.send(JSON.stringify({
-            type: 'game_started',
-            payload: {
-                players: room.game.players,
-                atoutPropose: room.game.atoutPropose
-            }
+            type: 'game_state_update',
+            payload: personalGameState
         }));
     });
 }

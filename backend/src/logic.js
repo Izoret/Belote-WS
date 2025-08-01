@@ -26,3 +26,13 @@ export function newPlayerInRoom(room, newPlayer) {
     room.players.push(newPlayer);
 }
 
+export function dealCards(players, deck, count) {
+    for (const player of players) {
+        for (let i = 0; i < count; i++) {
+            if (deck.length > 0) {
+                player.hand.push(deck.pop());
+            }
+        }
+    }
+}
+

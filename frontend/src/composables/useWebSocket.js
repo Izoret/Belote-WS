@@ -46,11 +46,13 @@ export function useWebSocket() {
                     case 'new_message':
                         store.chatMessages.push(payload);
                         break;
-                    case 'game_started':
-                        store.gameData.players = payload.players;
-                        store.gameData.atoutPropose = payload.atoutPropose;
-                        store.isInGame = true;
-                        store.isInLobby = false;
+                    case 'game_state_update':
+                        if (!store.isInGame) {
+                            store.isInGame = true;
+                            store.isInLobby = false;
+                        }
+                        store.gameState.myHand = payload.myHand;
+                        store.gameState.players = payload.players;
                         break;
                 }
             };
