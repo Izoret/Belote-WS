@@ -106,6 +106,8 @@ watch(
 .chat-message {
     margin-bottom: 8px;
     word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 .chat-message strong {
     color: var(--primary-color);
