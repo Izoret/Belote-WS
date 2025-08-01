@@ -36,8 +36,6 @@ export function useWebSocket() {
                         store.chatMessages = payload.chat;
                         store.isInLobby = true;
 
-                        console.log("room update call ! " + store.myId);
-
                         localStorage.setItem('belote_session', JSON.stringify({
                             myId: store.myId
                         }));
@@ -53,6 +51,14 @@ export function useWebSocket() {
                         }
                         store.gameState.myHand = payload.myHand;
                         store.gameState.players = payload.players;
+                        break;
+                    case 'game_end':
+                        store.gameState = {
+                            myHand: [],
+                            players: []
+                        };
+                        store.isInGame = false;
+                        store.isInLobby = true;
                         break;
                 }
             };

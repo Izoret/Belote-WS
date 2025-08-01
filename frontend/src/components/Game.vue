@@ -17,10 +17,15 @@ const orderedPlayers = computed(() => {
 const getCardImage = (card) => {
     if (!card) return 'img/cards/hidden.png';
     else return `img/cards/${card.value}_of_${card.suit}.png`;
-};
+}
+
+function endGame() {
+    sendMessage('end_game', {});
+}
 </script>
 
 <template>
+<button @click="endGame" class="leave-btn">Quitter la partie</button>
   <div class="game-board">
     <div class="game-table">
       <!-- Joueur du haut (cartes inversées) -->

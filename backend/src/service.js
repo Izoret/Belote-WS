@@ -85,6 +85,8 @@ export async function handleStartGame(ws) {
         }))
     }
 
+    console.log(JSON.stringify(room));
+
     broadcastGameState(roomCode)
 
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -133,6 +135,23 @@ export async function handleReconnect(ws, { oldId }) {
 
     broadcastRoomUpdate(roomCode)
     castInfoToReconnected(ws, roomCode, oldPlayer.team)
+}
+
+export async function handleEndGame(ws, {}) {
+    console.log("end game clicked!")
+
+    const roomCode = ws.roomCode;
+    const room = rooms.get(roomCode);
+
+    if (!room) throw new Error('Room non trouvée.??');
+    if (!room.game) throw new Error("Il n'y a pas de partie en cours.");
+
+    room.game = {
+        [],
+        players: []
+    }
+
+    broadcastEndGame()
 }
 
 // -------------CASTS-------------
@@ -208,3 +227,13 @@ export function broadcastGameState(roomCode) {
         }));
     });
 }
+
+export function broadcastEndGame() {
+ws.send(JSON.stringify({
+         type: 'game_end',
+         payload: {
+         }
+     }));
+
+}
+
