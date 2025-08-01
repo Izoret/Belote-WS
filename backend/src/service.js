@@ -22,10 +22,24 @@ export async function handleJoinRoom(ws, { roomCode, playerName }) {
     room.players.push({
         id: ws.id,
         name: playerName,
+        team: null,
         ws: ws
     });
 
     console.log(`Le joueur ${playerName} (${ws.id}) a rejoint la room ${roomCode}`);
+    broadcastRoomUpdate(roomCode);
+}
+
+export async function handleChangeTeam(ws, { team }) {
+    const roomCode = ws.roomCode;
+    const room = rooms.get(roomCode);
+    if (!room) throw new Error('Room non trouvée');
+
+    const player = room.players.find(p => p.id === ws.id);
+    if (!player) throw new Error('Joueur non trouvé');
+
+    player.team = team === 1 || team === 2 ? team : null;
+
     broadcastRoomUpdate(roomCode);
 }
 
@@ -59,6 +73,11 @@ export async function handleStartGame(ws) {
     if (room.players.length !== 4) throw new Error('Il faut exactement 4 joueurs pour commencer');
     if (room.game) throw new Error('La partie a déjà commencé');
 
+    const team1Count = room.players.filter(p => p.team === 1).length;
+    const team2Count = room.players.filter(p => p.team === 2).length;
+
+    if (team1Count !== 2 || team2Count !== 2) throw new Error("Les équipes ne sont pas équilibrées (2 Bleu / 2 Rouge) !");
+
     console.log(`Début de partie dans la room ${roomCode} !!`);
 
     const deck = logic.shuffleDeck(logic.createDeck());
@@ -67,7 +86,7 @@ export async function handleStartGame(ws) {
     room.game = {
         deck,
         atoutPropose,
-        players: room.players.map(p => ({ id: p.id, name: p.name }))
+        players: room.players.map(p => ({ id: p.id, name: p.name, team: p.team }))
     };
 
     broadcastGameStart(roomCode);
@@ -77,7 +96,7 @@ export function broadcastRoomUpdate(roomCode) {
     const room = rooms.get(roomCode);
     if (!room) return;
 
-    const publicPlayers = room.players.map(p => ({ id: p.id, name: p.name }));
+    const publicPlayers = room.players.map(p => ({ id: p.id, name: p.name, team: p.team }));
 
     room.players.forEach(player => {
         player.ws.send(JSON.stringify({

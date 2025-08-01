@@ -20,6 +20,10 @@ const startGame = () => {
     sendMessage('start_game', {}); 
 };
 
+function selectTeam(teamId) {
+    sendMessage('change_team', { team: teamId });
+}
+
 watch(
   () => store.chatMessages,
   async () => {
@@ -33,18 +37,23 @@ watch(
 </script>
 
 <template>
-  <div class="lobby-container">
+<div class="lobby-container">
     <div class="lobby-info">
         <h2>Salon : {{ store.roomCode.toUpperCase() }}</h2>
         <p>En attente de joueurs...</p>
-        
+    
         <ul class="player-list">
-            <li v-for="player in store.playersInRoom" :key="player.id">
-            ✔️ {{ player.name }}
+            <li v-for="player in store.playersInRoom" :key="player.id" :class="['player-item', { 'team-1': player.team === 1, 'team-2': player.team === 2 }]">
+                <span class="player-name">✔️ {{ player.name }}</span>
+
+                <div v-if="player.id === store.myId" class="team-selector">
+                    <button @click="selectTeam(1)" :class="{ active: player.team === 1 }" class="team-btn team-1-btn">Bleu</button>
+                    <button @click="selectTeam(2)" :class="{ active: player.team === 2 }" class="team-btn team-2-btn">Rouge</button>
+                </div>
             </li>
-            <li v-for="n in (4 - store.playersInRoom.length)" :key="n" class="waiting">
-            ⌛ En attente...
-            </li>
+            <li v-for="n in (4 - store.playersInRoom.length)" :key="n" class="waiting player-item">
+                ⌛ En attente...
+            </li>    
         </ul>
 
         <button v-if="computedStore.isLobbyFull.value" @click="startGame" class="start-button">
@@ -61,7 +70,7 @@ watch(
             <div v-for="(msg, index) in store.chatMessages" :key="index" class="chat-message">
                 <i>{{ msg.timestamp }} -</i> <strong>{{ msg.author }}:</strong> {{ msg.text }}
             </div>
-             <p v-if="store.chatMessages.length === 0" class="no-messages">
+            <p v-if="store.chatMessages.length === 0" class="no-messages">
                 Soyez le premier à envoyer un message !
             </p>
         </div>
@@ -70,7 +79,7 @@ watch(
             <button @click="postMessage">Envoyer</button>
         </div>
     </div>
-  </div>
+</div>
 </template>
 
 <style scoped>
@@ -123,4 +132,30 @@ watch(
 .chat-input input {
     flex-grow: 1;
 }
+.player-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+.player-name {
+    font-weight: 500;
+}
+.team-1 { background-color: rgba(59, 130, 246, 0.4); }
+.team-2 { background-color: rgba(239, 68, 68, 0.4); }
+
+.team-selector .team-btn {
+    padding: 4px 8px;
+    font-size: 0.8em;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+.team-selector .team-btn.active {
+    border-color: #000;
+    font-weight: bold;
+}
+.team-1-btn { background-color: rgb(59, 130, 246); color: white; }
+.team-2-btn { background-color: rgb(239, 68, 68); color: white; }
 </style>

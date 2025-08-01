@@ -17,6 +17,9 @@ export async function handleMessage(ws, message) {
             case "start_game":
                 await service.handleStartGame(ws, payload);
                 break;
+            case "change_team":
+                await service.handleChangeTeam(ws, payload);
+                break;
             default:
                 throw new Error('Type de message non reconnu');
         }
