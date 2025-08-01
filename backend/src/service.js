@@ -6,27 +6,21 @@ export async function handleJoinRoom(ws, { roomCode, playerName }) {
 
     if (!rooms.has(roomCode)) {
         console.log(`Création du lobby '${roomCode}' !`);
-        rooms.set(roomCode, { players: [], chat: [] });
+        rooms.set(roomCode, { players: [], chat: [], deadPlayers: [] });
     }
 
     const room = rooms.get(roomCode);
-
-    if (room.players.length >= 4) {
-        throw new Error('Le lobby est déjà plein !');
-    }
-
-    if (room.players.some(player => player.name === playerName)) {
-        throw new Error('Ce nom est déjà pris dans cette room !');
-    }
-
-    room.players.push({
+    const player = {
         id: ws.id,
         name: playerName,
         team: null,
         ws: ws
-    });
+    };
+
+    logic.newPlayerInRoom(room, player);
 
     console.log(`Le joueur ${playerName} (${ws.id}) a rejoint la room ${roomCode}`);
+
     broadcastRoomUpdate(roomCode);
 }
 
@@ -43,7 +37,7 @@ export async function handleChangeTeam(ws, { team }) {
     broadcastRoomUpdate(roomCode);
 }
 
-export async function handleSendMessage(ws, { text }) {
+export async function handleChatMsg(ws, { text }) {
     const roomCode = ws.roomCode;
     const room = rooms.get(roomCode);
     if (!room) throw new Error('Room non trouvée');
@@ -62,7 +56,7 @@ export async function handleSendMessage(ws, { text }) {
     };
 
     room.chat.push(messagePayload);
-    broadcastChatMessage(roomCode, messagePayload);
+    broadcastChatMsg(roomCode, messagePayload);
 }
 
 export async function handleStartGame(ws) {
@@ -92,6 +86,57 @@ export async function handleStartGame(ws) {
     broadcastGameStart(roomCode);
 }
 
+export async function handleReconnect(ws, { oldId }) {
+    console.log('TRY HANDLE RECO of old ' + oldId);
+
+    let room = null;
+    let oldPlayer = null;
+    let roomCode = null;
+
+    for (const [rc, r] of rooms.entries()) {
+        const pl = r.deadPlayers.find(p => p.id === oldId);
+        if (pl) {
+            room = r;
+            oldPlayer = pl;
+            roomCode = rc;
+            break;
+        }
+    }
+
+    if (!oldPlayer || !room || !roomCode) {
+        throw new Error("Reconnexion a échoué.. room code : " + roomCode);
+    }
+    
+    const player = {
+        id: ws.id,
+        name: oldPlayer.name,
+        team: oldPlayer.team,
+        ws: ws
+    };
+
+    ws.roomCode = roomCode;
+
+    logic.newPlayerInRoom(room, player);
+    room.deadPlayers = room.deadPlayers.filter(p => p.id !== oldPlayer.id);
+
+    console.log(`Joueur ${oldPlayer.name} (${ws.id}) reconnecté à la room ${roomCode}`);
+
+    broadcastRoomUpdate(roomCode)
+    castInfoToReconnected(ws, roomCode, oldPlayer.team)
+}
+
+// -------------CASTS-------------
+
+export function castInfoToReconnected(ws, roomCode, team) {
+    ws.send(JSON.stringify({
+        type: 'f_reconnect',
+        payload: {
+            roomCode: roomCode,
+            team: team
+        }
+    }));
+}
+
 export function broadcastRoomUpdate(roomCode) {
     const room = rooms.get(roomCode);
     if (!room) return;
@@ -109,7 +154,7 @@ export function broadcastRoomUpdate(roomCode) {
     });
 }
 
-export function broadcastChatMessage(roomCode, messagePayload) {
+export function broadcastChatMsg(roomCode, messagePayload) {
     const room = rooms.get(roomCode);
     if (!room) return;
 
