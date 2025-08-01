@@ -10,13 +10,13 @@ export function useWebSocket() {
     }
     
     return new Promise((resolve, reject) => {
-      socket = new WebSocket(process.env.SERVER_WS_URL);
+        socket = new WebSocket(import.meta.env.VITE_SERVER_WS_URL);
 
-      socket.onopen = () => {
-        console.log('🔗 Connecté au serveur WebSocket !');
-        store.errorMessage = '';
-        resolve();
-      };
+        socket.onopen = () => {
+            console.log('🔗 Connecté au serveur WebSocket !');
+            store.errorMessage = '';
+            resolve();
+        };
 
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
