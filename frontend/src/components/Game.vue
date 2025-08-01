@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { store } from '../store.js';
+import { useWebSocket } from '../composables/useWebSocket.js';
+const { sendMessage } = useWebSocket();
 
 // Le but est de toujours nous afficher en bas
 const orderedPlayers = computed(() => {

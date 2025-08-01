@@ -85,7 +85,7 @@ export async function handleStartGame(ws) {
         }))
     }
 
-    console.log(JSON.stringify(room));
+    //console.log(JSON.stringify(room));
 
     broadcastGameState(roomCode)
 
@@ -98,6 +98,20 @@ export async function handleStartGame(ws) {
 
     logic.dealCards(room.game.players, room.game.deck, 2)
     broadcastGameState(roomCode)
+}
+
+export async function handleEndGame(ws, {}) {
+    console.log("end game clicked!")
+
+    const roomCode = ws.roomCode;
+    const room = rooms.get(roomCode);
+
+    if (!room) throw new Error('Room non trouvée.??');
+    if (!room.game) throw new Error("Il n'y a pas de partie en cours.");
+
+    room.game = null;
+
+    broadcastEndGame(roomCode)
 }
 
 export async function handleReconnect(ws, { oldId }) {
@@ -137,23 +151,6 @@ export async function handleReconnect(ws, { oldId }) {
     castInfoToReconnected(ws, roomCode, oldPlayer.team)
 }
 
-export async function handleEndGame(ws, {}) {
-    console.log("end game clicked!")
-
-    const roomCode = ws.roomCode;
-    const room = rooms.get(roomCode);
-
-    if (!room) throw new Error('Room non trouvée.??');
-    if (!room.game) throw new Error("Il n'y a pas de partie en cours.");
-
-    room.game = {
-        [],
-        players: []
-    }
-
-    broadcastEndGame()
-}
-
 // -------------CASTS-------------
 
 export function castInfoToReconnected(ws, roomCode, team) {
@@ -189,7 +186,7 @@ export function broadcastChatMsg(roomCode, messagePayload) {
 
     room.players.forEach(player => {
         player.ws.send(JSON.stringify({
-            type: 'new_message',
+            type: 'new_chat_msg',
             payload: messagePayload
         }));
     });
@@ -228,12 +225,15 @@ export function broadcastGameState(roomCode) {
     });
 }
 
-export function broadcastEndGame() {
-ws.send(JSON.stringify({
-         type: 'game_end',
-         payload: {
-         }
-     }));
+export function broadcastEndGame(roomCode) {
+     const room = rooms.get(roomCode);
+     if (!room) return;
 
+     room.players.forEach(player => {
+         player.ws.send(JSON.stringify({
+             type: 'game_end',
+             payload: {}
+         }));
+     });
 }
 

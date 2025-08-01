@@ -41,7 +41,7 @@ export function useWebSocket() {
                         }));
 
                         break;
-                    case 'new_message':
+                    case 'new_chat_msg':
                         store.chatMessages.push(payload);
                         break;
                     case 'game_state_update':
