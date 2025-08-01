@@ -24,6 +24,16 @@ function selectTeam(teamId) {
     sendMessage('change_team', { team: teamId });
 }
 
+function leaveRoom() {
+    sendMessage('leave_room', {});
+
+    localStorage.removeItem('belote_session');
+    store.isInLobby = false;
+    store.playersInRoom = [];
+    store.chatMessages = [];
+    store.roomCode = '';
+}
+
 watch(
   () => store.chatMessages,
   async () => {
@@ -78,6 +88,7 @@ watch(
             <input type="text" v-model="newMessage" @keyup.enter="postMessage" placeholder="Écrire un message..." />
             <button @click="postMessage">Envoyer</button>
         </div>
+        <button @click="leaveRoom" class="leave-btn">Quitter</button>
     </div>
 </div>
 </template>
@@ -91,6 +102,17 @@ watch(
 }
 .lobby-info, .chat-area {
     flex: 1;
+}
+.leave-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #7f8c8d;
+    font-size: 0.9em;
+    padding: 6px 12px;
+}
+.lobby-info {
+    position: relative;
 }
 .chat-area {
   border-left: none;

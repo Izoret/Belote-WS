@@ -11,10 +11,7 @@ const { connect, sendMessage } = useWebSocket();
 // si données de session, on réutilise les infos reconnecter
 onMounted(async () => {
     const session = localStorage.getItem('belote_session');
-    if (!session) {
-        console.log("No session found !!");
-        return;
-    }
+    if (!session) return;
 
     const { myId } = JSON.parse(session);
     if (!myId) {

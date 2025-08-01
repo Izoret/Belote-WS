@@ -23,6 +23,9 @@ export async function handleMessage(ws, message) {
             case "reconnect":
                 await service.handleReconnect(ws, payload);
                 break;
+            case "leave_room":
+                handleDisconnect(ws);
+                break;
             default:
                 throw new Error('Type de message non reconnu');
         }
@@ -45,13 +48,13 @@ export function handleDisconnect(ws) {
         const player = room.players.find(player => player.id === ws.id);
         room.players = room.players.filter(player => player.id !== ws.id);
 
-       // if (room.players.length === 0) {
-    //        rooms.delete(roomCode);
-      //      console.log(`Room ${roomCode} vide, supprimée.`);
-        //} else {
+        if (room.players.length === 0) {
+            rooms.delete(roomCode);
+            console.log(`Room ${roomCode} vide, supprimée.`);
+        } else {
             room.deadPlayers.push(player);
             service.broadcastRoomUpdate(roomCode);
-        //}
+        }
     }
 }
 

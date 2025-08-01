@@ -24,13 +24,6 @@ export function useWebSocket() {
                 switch (type) {
                     case 'connection_ready':
                         store.myId = payload.id;
-                       
-                        /*if (!localStorage.getItem('belote_session')) {
-                            localStorage.setItem('belote_session', JSON.stringify({
-                                myId: store.myId
-                            }));
-                        }*/
-                        
                         break;
                     case 'error':
                         store.errorMessage = message;
@@ -46,8 +39,8 @@ export function useWebSocket() {
                         console.log("room update call ! " + store.myId);
 
                         localStorage.setItem('belote_session', JSON.stringify({
-                                 myId: store.myId
-                             }));
+                            myId: store.myId
+                        }));
 
                         break;
                     case 'new_message':
