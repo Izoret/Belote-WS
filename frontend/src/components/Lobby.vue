@@ -46,7 +46,7 @@ const startGame = () => {
         <h3>Chat du salon</h3>
         <div class="chat-box">
             <div v-for="(msg, index) in store.chatMessages" :key="index" class="chat-message">
-                <strong>{{ msg.author }}:</strong> {{ msg.text }}
+                <i>{{ msg.timestamp }} -</i> <strong>{{ msg.author }}:</strong> {{ msg.text }}
             </div>
              <p v-if="store.chatMessages.length === 0" class="no-messages">
                 Soyez le premier à envoyer un message !
@@ -62,28 +62,33 @@ const startGame = () => {
 
 <style scoped>
 .lobby-container {
-    display: flex;
-    gap: 30px;
-    align-items: flex-start;
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
+  align-items: stretch;
 }
 .lobby-info, .chat-area {
     flex: 1;
 }
 .chat-area {
-    border-left: 1px solid #eee;
-    padding-left: 30px;
-    height: 400px;
-    display: flex;
-    flex-direction: column;
+  border-left: none;
+  border-top: 1px solid #eee;
+  padding-left: 0;
+  padding-top: 30px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
 }
 .chat-box {
     flex-grow: 1;
     overflow-y: auto;
+    max-height: 300px;
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 10px;
     background: #f9f9f9;
     margin-bottom: 10px;
+    text-align: left;
 }
 .chat-message {
     margin-bottom: 8px;

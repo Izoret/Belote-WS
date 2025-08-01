@@ -1,4 +1,3 @@
-// server.js
 import { WebSocketServer } from 'ws';
 import { v4 as uuidv4 } from 'uuid'; // Pour donner un ID unique à chaque joueur
 
@@ -61,10 +60,14 @@ wss.on('connection', ws => {
                 const sender = room.players.find(p => p.id === ws.id);
                 if (!sender) return;
 
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+
                 const messagePayload = {
                     author: sender.name,
                     text: payload.text,
-                    timestamp: new Date().toISOString()
+                    timestamp: `${hours}:${minutes}`
                 };
 
                 room.chat.push(messagePayload);
