@@ -68,18 +68,20 @@ export async function handleStartGame(ws) {
     if (room.players.length !== 4) throw new Error('Il faut exactement 4 joueurs pour commencer');
     if (room.game) throw new Error('La partie a déjà commencé');
 
-    const team1Count = room.players.filter(p => p.team === 1).length;
-    const team2Count = room.players.filter(p => p.team === 2).length;
-    if (team1Count !== 2 || team2Count !== 2) throw new Error("Les équipes ne sont pas équilibrées (2 Bleu / 2 Rouge) !");
+    const team1 = room.players.filter(p => p.team === 1);
+    const team2 = room.players.filter(p => p.team === 2);
+    if (team1.length !== 2 || team2.length !== 2) throw new Error("Les équipes ne sont pas équilibrées (2 Bleu / 2 Rouge) !")
 
-    console.log(`Début de partie dans la room ${roomCode} !!`);
+    const orderedPlayers = [team1[0], team2[0], team1[1], team2[1]]
+
+    console.log(`Début de partie dans la room ${roomCode} !!`)
 
     const deck = logic.shuffleDeck(logic.createDeck());
 
     room.game = {
         deck,
         dealerId: ws.id,
-        players: room.players.map(p => ({ 
+        players: orderedPlayers.map(p => ({ 
             id: p.id,
             name: p.name,
             team: p.team,
@@ -114,7 +116,9 @@ export async function handleStartGame(ws) {
     await new Promise(resolve => setTimeout(resolve, 2000))
 
     room.game.bidding.trumpCard = room.game.deck.pop();
-    broadcastGameState(roomCode);
+    broadcastGameState(roomCode)
+
+    await new Promise(resolve => setTimeout(resolve, 2000))
 
     room.game.bidding.phase = true;
 
@@ -122,7 +126,7 @@ export async function handleStartGame(ws) {
     const firstBidderIndex = (dealerIndex + 1) % 4;
     room.game.bidding.currentBidderId = room.game.players[firstBidderIndex].id;
 
-    broadcastGameState(roomCode);
+    broadcastGameState(roomCode)
 }
 
 export async function handleBidAction(ws, { action }) {

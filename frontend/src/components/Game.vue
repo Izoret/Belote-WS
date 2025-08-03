@@ -11,21 +11,11 @@ const orderedPlayers = computed(() => {
     const players = store.game.players;
     const myIndex = players.findIndex(p => p.id === store.myId);
 
-    const me = players[myIndex];
-    const partnerIndex = players.findIndex(p =>
-        p.team === me.team && p.id !== me.id
-    );
-
-    const opponents = players.filter(p => 
-        p.team !== me.team
-    );
-
-    return [
-        me,
-        opponents[0],
-        players[partnerIndex],
-        opponents[1]
-    ];
+    const reordered = []
+    for (let i = 0; i < 4; i++) {
+        reordered.push(players[(myIndex + i) % 4])
+    }
+    return reordered
 })
 
 const getCardImage = (card) => {
@@ -219,7 +209,7 @@ const isMyBidTurn = computed(() => {
       <!-- Centre de la table -->
       <div class="table-center">
         <div class="center-content">
-          <div class="atout-section" v-if="store.game.bidding.trumpCard || store.game.bidding.takerId">
+          <div class="atout-section" v-if="store.game.bidding.trumpCard">
             <img :src="getCardImage(store.game.bidding.trumpCard)" alt="Carte atout" class="atout-card" />
             <div class="atout-info">
               <p class="atout-text">Atout proposé</p>
