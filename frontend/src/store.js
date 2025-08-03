@@ -15,15 +15,20 @@ export const store = reactive(
     isInLobby: false,
     isInGame: false,
     
-    gameState: {
+    game: {
         myHand: [],
         players: [],
         dealerId: null,
-        trumpCard: null,
         dealingAnimation: {
             active: false,
             cardCount: 0,
             dealerPosition: null
+        },
+        bidding: {
+            phase: false,
+            trumpCard: null,
+            currendBidderId: null,
+            takerId: null
         }
     },
 })

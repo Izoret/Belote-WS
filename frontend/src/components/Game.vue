@@ -8,14 +8,24 @@ const dealingCards = ref([]);
 
 // Le but est de toujours nous afficher en bas
 const orderedPlayers = computed(() => {
-    const players = store.gameState.players;
+    const players = store.game.players;
     const myIndex = players.findIndex(p => p.id === store.myId);
 
-    const reordered = []
-    for (let i = 0; i < 4; i++) {
-        reordered.push(players[(myIndex + i) % 4])
-    }
-    return reordered;
+    const me = players[myIndex];
+    const partnerIndex = players.findIndex(p =>
+        p.team === me.team && p.id !== me.id
+    );
+
+    const opponents = players.filter(p => 
+        p.team !== me.team
+    );
+
+    return [
+        me,
+        opponents[0],
+        players[partnerIndex],
+        opponents[1]
+    ];
 })
 
 const getCardImage = (card) => {
@@ -28,11 +38,11 @@ function endGame() {
 }
 
 const dealerPosition = computed(() => {
-    if (!store.gameState.dealerId || !orderedPlayers.value.length) return null;
-    return orderedPlayers.value.findIndex(p => p.id === store.gameState.dealerId);
+    if (!store.game.dealerId || !orderedPlayers.value.length) return null;
+    return orderedPlayers.value.findIndex(p => p.id === store.game.dealerId);
 });
 
-watch(() => store.gameState.dealingAnimation, (newVal) => {
+watch(() => store.game.dealingAnimation, (newVal) => {
     if (newVal.active) {
         startDealingAnimation(newVal.cardCount, newVal.dealerPosition);
     }
@@ -41,7 +51,6 @@ watch(() => store.gameState.dealingAnimation, (newVal) => {
 function startDealingAnimation(cardCount, dealerPos) {
     dealingCards.value = [];
 
-    // Positions des joueurs (nord, est, sud, ouest)
     const positions = [
         { x: 50, y: 85 },  // Nord
         { x: 85, y: 50 },  // Est
@@ -49,7 +58,6 @@ function startDealingAnimation(cardCount, dealerPos) {
         { x: 15, y: 50 }   // Ouest
     ];
 
-    // Tailles des cartes selon la position
     const cardSizes = ['85px', '50px', '65px', '50px']; // Sud, Ouest, Nord, Est
 
     // Créer les cartes volantes
@@ -97,15 +105,51 @@ function getSuitSymbol(suit) {
 function isRedSuit(suit) {
     return suit === 'hearts' || suit === 'diamonds';
 }
+
+function takeTrump() {
+    sendMessage('bid_action', { action: 'take' });
+}
+
+function passTrump() {
+    sendMessage('bid_action', { action: 'pass' });
+}
+
+const currentBidderName = computed(() => {
+    if (!store.game.bidding.currentBidderId) return '';
+    const bidder = store.game.players.find(
+        p => p.id === store.game.bidding.currentBidderId
+    );
+    return bidder ? bidder.name : '';
+});
+
+const isMyBidTurn = computed(() => {
+    return store.game.bidding.phase &&
+           store.game.bidding.currentBidderId === store.myId;
+});
 </script>
 
 <template>
+<div v-if="store.game.bidding.phase" class="bidding-overlay">
+    <div class="bidding-panel">
+        <h3 v-if="isMyBidTurn">Voulez-vous prendre l'atout ?</h3>
+        <h3 v-else>En attente de {{ currentBidderName }}...</h3>
+        
+        <div v-if="isMyBidTurn" class="bid-actions">
+            <button @click="takeTrump" class="bid-btn take-btn">Prendre</button>
+            <button @click="passTrump" class="bid-btn pass-btn">Passer</button>
+        </div>
+    </div>
+</div>
+
 <button @click="endGame" class="leave-btn">Quitter la partie</button>
   <div class="game-board">
     <div class="game-table">
       <!-- Joueur du haut (cartes inversées) -->
       <div v-if="orderedPlayers.length === 4" class="player-area player-north">
-        <div class="player-name">{{ orderedPlayers[2].name }}</div>
+        <div class="player-info">
+          <div class="team-indicator" :class="'team-' + orderedPlayers[2].team"></div>
+          <div class="player-name">{{ orderedPlayers[2].name }}</div>
+        </div>
         <div class="opponent-hand opponent-hand-north">
           <img 
             v-for="n in orderedPlayers[2].handSize" 
@@ -119,7 +163,10 @@ function isRedSuit(suit) {
 
       <!-- Joueur de gauche (cartes verticales) -->
       <div v-if="orderedPlayers.length === 4" class="player-area player-west">
-        <div class="player-name">{{ orderedPlayers[1].name }}</div>
+        <div class="player-info">
+          <div class="team-indicator" :class="'team-' + orderedPlayers[1].team"></div>
+          <div class="player-name">{{ orderedPlayers[1].name }}</div>
+        </div>
         <div class="opponent-hand opponent-hand-west">
           <img 
             v-for="n in orderedPlayers[1].handSize" 
@@ -133,7 +180,10 @@ function isRedSuit(suit) {
 
       <!-- Joueur de droite (cartes verticales) -->
       <div v-if="orderedPlayers.length === 4" class="player-area player-east">
-        <div class="player-name">{{ orderedPlayers[3].name }}</div>
+        <div class="player-info">
+          <div class="team-indicator" :class="'team-' + orderedPlayers[3].team"></div>
+          <div class="player-name">{{ orderedPlayers[3].name }}</div>
+        </div>
         <div class="opponent-hand opponent-hand-east">
           <img 
             v-for="n in orderedPlayers[3].handSize" 
@@ -149,7 +199,7 @@ function isRedSuit(suit) {
       <div v-if="orderedPlayers.length === 4" class="player-area player-south">
         <div class="my-hand">
           <img 
-            v-for="(card, index) in store.gameState.myHand" 
+            v-for="(card, index) in store.game.myHand" 
             :key="index" 
             :src="getCardImage(card)" 
             class="card-in-hand"
@@ -157,26 +207,30 @@ function isRedSuit(suit) {
             :alt="`${card.value} of ${card.suit}`" 
           />
         </div>
-        <div class="player-name player-name-me">
-          <strong>{{ orderedPlayers[0].name }} (Vous)</strong>
+
+        <div class="player-info">
+          <div class="team-indicator" :class="'team-' + orderedPlayers[0].team"></div>
+          <div class="player-name player-name-me">
+            <strong>{{ orderedPlayers[0].name }} (Vous)</strong>
+          </div>
         </div>
       </div>
 
       <!-- Centre de la table -->
       <div class="table-center">
         <div class="center-content">
-          <div class="atout-section">
-            <img :src="getCardImage(store.gameState.trumpCard)" alt="Carte atout" class="atout-card" />
+          <div class="atout-section" v-if="store.game.bidding.trumpCard || store.game.bidding.takerId">
+            <img :src="getCardImage(store.game.bidding.trumpCard)" alt="Carte atout" class="atout-card" />
             <div class="atout-info">
               <p class="atout-text">Atout proposé</p>
                 <div 
     class="atout-suit" 
     :class="{
-        'suit-red': isRedSuit(store.gameState.trumpCard?.suit),
-        'suit-black': !isRedSuit(store.gameState.trumpCard?.suit)
+        'suit-red': isRedSuit(store.game.bidding.trumpCard?.suit),
+        'suit-black': !isRedSuit(store.game.bidding.trumpCard?.suit)
     }"
 >
-    {{ getSuitSymbol(store.gameState.trumpCard?.suit) }}
+    {{ getSuitSymbol(store.game.bidding.trumpCard?.suit) }}
 </div>        
     </div>
           </div>
@@ -276,6 +330,32 @@ function isRedSuit(suit) {
   justify-content: center;
   gap: 15px;
 }
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.team-indicator {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+.team-1 {
+    background-color: #3b82f6; /* Blue */
+}
+
+.team-2 {
+    background-color: #ef4444; /* Red */
+}
+
+/* Update existing team classes to use same colors */
+.team-1-bg { background-color: rgba(59, 130, 246, 0.4); }
+.team-2-bg { background-color: rgba(239, 68, 68, 0.4); }
 
 .player-name {
   background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(0,0,0,0.4));
@@ -581,5 +661,73 @@ function isRedSuit(suit) {
   right: 10%;
   transform: translateY(-50%);
   width: 7%;
+}
+
+.bidding-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.bidding-panel {
+    background: linear-gradient(135deg, #2c3e50, #1a1a2e);
+    padding: 30px 40px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 2px solid #3498db;
+    max-width: 400px;
+    width: 90%;
+}
+
+.bidding-panel h3 {
+    color: #ecf0f1;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.bid-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.bid-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.take-btn {
+    background: linear-gradient(to bottom, #2ecc71, #27ae60);
+    color: white;
+}
+
+.take-btn:hover {
+    background: linear-gradient(to bottom, #27ae60, #219653);
+    transform: translateY(-3px);
+}
+
+.pass-btn {
+    background: linear-gradient(to bottom, #e74c3c, #c0392b);
+    color: white;
+}
+
+.pass-btn:hover {
+    background: linear-gradient(to bottom, #c0392b, #a23526);
+    transform: translateY(-3px);
 }
 </style>

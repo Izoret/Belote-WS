@@ -4,40 +4,43 @@ import * as logic from './logic.js';
 
 export async function handleMessage(ws, message) {
     try {
-        const data = JSON.parse(message);
-        const { type, payload } = data;
+        const data = JSON.parse(message)
+        const { type, payload } = data
 
         switch (type) {
             case "join_room":
-                await service.handleJoinRoom(ws, payload);
-                break;
+                await service.handleJoinRoom(ws, payload)
+                break
             case "send_message":
-                await service.handleChatMsg(ws, payload);
-                break;
+                await service.handleChatMsg(ws, payload)
+                break
             case "start_game":
-                await service.handleStartGame(ws, payload);
-                break;
+                await service.handleStartGame(ws, payload)
+                break
+            case "bid_action":
+                await service.handleBidAction(ws, payload)
+                break
             case "change_team":
-                await service.handleChangeTeam(ws, payload);
-                break;
+                await service.handleChangeTeam(ws, payload)
+                break
             case "reconnect":
-                await service.handleReconnect(ws, payload);
-                break;
+                await service.handleReconnect(ws, payload)
+                break
             case "leave_room":
-                handleDisconnect(ws);
-                break;
+                handleDisconnect(ws)
+                break
             case "end_game":
-                await service.handleEndGame(ws, payload);
-                break;
+                await service.handleEndGame(ws, payload)
+                break
             default:
-                throw new Error('Type de message non reconnu');
+                throw new Error('Type de message non reconnu')
         }
     } catch (error) {
-        console.error(`Erreur pour le client ${ws.id}:`, error.message);
+        console.error(`Erreur pour le client ${ws.id}:`, error.message)
         ws.send(JSON.stringify({
             type: 'error',
             message: error.message
-        }));
+        }))
     }
 }
 

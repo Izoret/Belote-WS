@@ -50,20 +50,20 @@ export function useWebSocket() {
               store.isInGame = true
               store.isInLobby = false
             }
-            store.gameState.myHand = payload.myHand
-            store.gameState.players = payload.players
-            store.gameState.trumpCard = payload.trumpCard
+            store.game.myHand = payload.myHand
+            store.game.players = payload.players
+            store.game.bidding = payload.bidding
             break
           case 'dealing_start':
-              store.gameState.dealingAnimation = {
+              store.game.dealingAnimation = {
                 active: true,
                 cardCount: payload.cardCount,
                 dealerPosition: payload.dealerId === store.myId ? 0 : 
-                  store.gameState.players.findIndex(p => p.id === payload.dealerId)
+                  store.game.players.findIndex(p => p.id === payload.dealerId)
               }
               break
           case 'game_end':
-            store.gameState = {
+            store.game = {
               myHand: [],
               players: []
             }

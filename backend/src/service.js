@@ -85,7 +85,12 @@ export async function handleStartGame(ws) {
             team: p.team,
             hand: []
         })),
-        trumpCard: null
+        bidding: {
+            phase: false,
+            trumpCard: null,
+            currendBidderId: null,
+            takerId: null
+        }
     }
 
     broadcastGameState(roomCode)
@@ -108,7 +113,41 @@ export async function handleStartGame(ws) {
 
     await new Promise(resolve => setTimeout(resolve, 2000))
 
-    room.game.trumpCard = room.game.deck.pop();
+    room.game.bidding.trumpCard = room.game.deck.pop();
+    broadcastGameState(roomCode);
+
+    room.game.bidding.phase = true;
+
+    const dealerIndex = room.game.players.findIndex(p => p.id === ws.id);
+    const firstBidderIndex = (dealerIndex + 1) % 4;
+    room.game.bidding.currentBidderId = room.game.players[firstBidderIndex].id;
+
+    broadcastGameState(roomCode);
+}
+
+export async function handleBidAction(ws, { action }) {
+    const roomCode = ws.roomCode
+    const room = rooms.get(roomCode)
+    if (!room || !room.game) throw new Error('Game not found')
+    if (ws.id !== room.game.bidding.currentBidderId) throw new Error("Not your turn to bid")
+
+    if (action === 'take') {
+        const bidder = room.game.players.find(p => p.id === ws.id);
+        bidder.hand.push(room.game.bidding.trumpCard);
+        room.game.bidding.trumpCard = null;
+        room.game.bidding.takerId = ws.id;
+        room.game.bidding.phase = false;
+    }
+    else if (action === 'pass') {
+        const currentIndex = room.game.players.findIndex(p => p.id === ws.id);
+        const nextIndex = (currentIndex + 1) % 4;
+        room.game.bidding.currentBidderId = room.game.players[nextIndex].id;
+
+        if (room.game.bidding.currentBidderId === room.game.dealerId) {
+            room.game.biddingPhase = false;
+        }
+    }
+
     broadcastGameState(roomCode);
 }
 
@@ -211,17 +250,19 @@ export function broadcastGameState(roomCode) {
     const fullGameState = room.game
 
     room.players.forEach(player => {
-        const personalGameState = {
+        const clientGameState = {
             myHand: [],
-            players: []
+            players: [],
+            dealerId: fullGameState.dealerId,
+            bidding: fullGameState.bidding
         };
 
         const myPlayerState = fullGameState.players.find(p => p.id === player.id);
         if (myPlayerState) {
-            personalGameState.myHand = myPlayerState.hand;
+            clientGameState.myHand = myPlayerState.hand;
         }
 
-        personalGameState.players = fullGameState.players.map(p => {
+        clientGameState.players = fullGameState.players.map(p => {
             return {
                 id: p.id,
                 name: p.name,
@@ -232,11 +273,7 @@ export function broadcastGameState(roomCode) {
 
         player.ws.send(JSON.stringify({
             type: 'game_state_update',
-            payload: {
-                ...personalGameState,
-                dealerId: fullGameState.dealerId,
-                trumpCard: fullGameState.trumpCard
-            }
+            payload: clientGameState
         }));
     });
 }
