@@ -128,13 +128,13 @@ function chooseSuit(suit) {
 <div v-if="store.game.bidding.phase" class="bidding-overlay">
     <div class="bidding-panel">
         <h3 v-if="isMyBidTurn">
-            <span v-if="biddingRound === 1">Voulez-vous prendre l'atout ?</span>
+            <span v-if="store.game.bidding.phase === 1">Voulez-vous prendre l'atout ?</span>
             <span v-else>Voulez-vous choisir un autre atout ?</span>
         </h3>
         <h3 v-else>En attente de {{ currentBidderName }}...</h3>
     
         <div v-if="isMyBidTurn">
-            <div v-if="biddingRound === 1" class="bid-actions">
+            <div v-if="store.game.bidding.phase === 1" class="bid-actions">
                 <button @click="takeTrump" class="bid-btn take-btn">Prendre</button>
             </div>
             <div v-else class="suit-selection">
