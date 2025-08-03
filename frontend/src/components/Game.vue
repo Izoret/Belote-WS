@@ -116,16 +116,43 @@ const isMyBidTurn = computed(() => {
     return store.game.bidding.phase &&
            store.game.bidding.currentBidderId === store.myId;
 });
+
+const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+
+function chooseSuit(suit) {
+    sendMessage('bid_action', { action: suit });
+}
 </script>
 
 <template>
 <div v-if="store.game.bidding.phase" class="bidding-overlay">
     <div class="bidding-panel">
-        <h3 v-if="isMyBidTurn">Voulez-vous prendre l'atout ?</h3>
+        <h3 v-if="isMyBidTurn">
+            <span v-if="biddingRound === 1">Voulez-vous prendre l'atout ?</span>
+            <span v-else>Voulez-vous choisir un autre atout ?</span>
+        </h3>
         <h3 v-else>En attente de {{ currentBidderName }}...</h3>
-        
-        <div v-if="isMyBidTurn" class="bid-actions">
-            <button @click="takeTrump" class="bid-btn take-btn">Prendre</button>
+    
+        <div v-if="isMyBidTurn">
+            <div v-if="biddingRound === 1" class="bid-actions">
+                <button @click="takeTrump" class="bid-btn take-btn">Prendre</button>
+            </div>
+            <div v-else class="suit-selection">
+                <div class="suit-buttons">
+                    <button 
+                        v-for="suit in suits" 
+                        :key="suit"
+                        @click="chooseSuit(suit)"
+                        class="suit-btn"
+                        :class="{
+                            'suit-red': isRedSuit(suit),
+                            'suit-black': !isRedSuit(suit)
+                        }"
+                    >
+                        {{ getSuitSymbol(suit) }}
+                    </button>
+                </div>
+            </div>
             <button @click="passTrump" class="bid-btn pass-btn">Passer</button>
         </div>
     </div>
@@ -719,5 +746,48 @@ const isMyBidTurn = computed(() => {
 .pass-btn:hover {
     background: linear-gradient(to bottom, #c0392b, #a23526);
     transform: translateY(-3px);
+}
+
+.suit-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.suit-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    width: 100%;
+}
+
+.suit-btn {
+    width: 60px;
+    height: 80px;
+    font-size: 2.5em;
+    border-radius: 8px;
+    border: 2px solid white;
+    background: rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.suit-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.suit-red {
+    color: #ff4d4d;
+    text-shadow: 0 0 5px rgba(255, 77, 77, 0.7);
+}
+
+.suit-black {
+    color: #333;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 </style>

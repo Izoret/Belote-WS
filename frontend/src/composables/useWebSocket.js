@@ -27,55 +27,56 @@ export function useWebSocket() {
       }
 
       socket.onmessage = event => {
-        const data = JSON.parse(event.data)
-        const { type, payload, message } = data
+          const data = JSON.parse(event.data)
+          const { type, payload, message } = data
 
-        switch (type) {
-          case 'connection_ready':
-            store.myId = payload.id
-            break
-          case 'room_update':
-            store.playersInRoom = payload.players
-            store.chatMessages = payload.chat
-            store.isInLobby = true
-            localStorage.setItem('belote_session', JSON.stringify({
-              myId: store.myId
-            }))
-            break
-          case 'new_chat_msg':
-            store.chatMessages.push(payload)
-            break
-          case 'game_state_update':
-            if (!store.isInGame) {
-              store.isInGame = true
-              store.isInLobby = false
-            }
-            store.game.myHand = payload.myHand
-            store.game.players = payload.players
-            store.game.bidding = payload.bidding
-            break
-          case 'dealing_start':
-              store.game.dealingAnimation = {
-                active: true,
-                cardCount: payload.cardCount,
-                dealerPosition: payload.dealerId === store.myId ? 0 : 
-                  store.game.players.findIndex(p => p.id === payload.dealerId)
-              }
-              break
-          case 'game_end':
-            store.game = {
-              myHand: [],
-              players: []
-            }
-            store.isInGame = false
-            store.isInLobby = true
-            break
-          case 'f_reconnect':
-            store.roomCode = payload.roomCode
-            break
-          case 'error':
-            setErrorMessage(message)
-            break
+          switch (type) {
+              case 'connection_ready':
+                  store.myId = payload.id
+                  break
+              case 'room_update':
+                  store.playersInRoom = payload.players
+                  store.chatMessages = payload.chat
+                  store.isInLobby = true
+                  localStorage.setItem('belote_session', JSON.stringify({
+                      myId: store.myId
+                  }))
+                break
+              case 'new_chat_msg':
+                store.chatMessages.push(payload)
+                break
+              case 'game_state_update':
+                  if (!store.isInGame) {
+                      store.isInGame = true
+                      store.isInLobby = false
+                  }
+                  store.game.myHand = payload.myHand
+                  store.game.players = payload.players
+                  store.game.bidding = payload.bidding
+                  store.game.trumpSuit = payload.trumpSuit
+                  break
+              case 'dealing_start':
+                  store.game.dealingAnimation = {
+                      active: true,
+                      cardCount: payload.cardCount,
+                      dealerPosition: payload.dealerId === store.myId ? 0 : 
+                      store.game.players.findIndex(p => p.id === payload.dealerId)
+                  }
+                  break
+              case 'game_end':
+                store.game = {
+                  myHand: [],
+                  players: []
+                }
+                store.isInGame = false
+                store.isInLobby = true
+                break
+              case 'f_reconnect':
+                store.roomCode = payload.roomCode
+                break
+              case 'error':
+                setErrorMessage(message)
+                break
         }
       }
 

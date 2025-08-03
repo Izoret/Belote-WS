@@ -25,11 +25,12 @@ export const store = reactive(
             dealerPosition: null
         },
         bidding: {
-            phase: false,
+            phase: 0,
             trumpCard: null,
             currendBidderId: null,
             takerId: null
-        }
+        },
+        trumpSuit: null
     },
 })
 

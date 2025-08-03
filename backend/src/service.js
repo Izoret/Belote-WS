@@ -88,11 +88,12 @@ export async function handleStartGame(ws) {
             hand: []
         })),
         bidding: {
-            phase: false,
+            phase: 0,
             trumpCard: null,
             currendBidderId: null,
             takerId: null
-        }
+        },
+        trumpSuit: null
     }
 
     broadcastGameState(roomCode)
@@ -120,7 +121,7 @@ export async function handleStartGame(ws) {
 
     await new Promise(resolve => setTimeout(resolve, 2000))
 
-    room.game.bidding.phase = true;
+    room.game.bidding.phase = 1;
 
     const dealerIndex = room.game.players.findIndex(p => p.id === ws.id);
     const firstBidderIndex = (dealerIndex + 1) % 4;
@@ -135,19 +136,44 @@ export async function handleBidAction(ws, { action }) {
     if (!room || !room.game) throw new Error('Game not found')
     if (ws.id !== room.game.bidding.currentBidderId) throw new Error("Not your turn to bid")
 
-    if (action === 'take') {
-        const bidder = room.game.players.find(p => p.id === ws.id);
-        bidder.hand.push(room.game.bidding.trumpCard);
-        room.game.bidding.trumpCard = null;
-        room.game.bidding.takerId = ws.id;
-        room.game.bidding.phase = false;
-    }
-    else if (action === 'pass') {
-        if (room.game.bidding.currentBidderId === room.game.dealerId) room.game.bidding.phase = false
-        
-        const currentIndex = room.game.players.findIndex(p => p.id === ws.id);
-        const nextIndex = (currentIndex + 1) % 4;
-        room.game.bidding.currentBidderId = room.game.players[nextIndex].id;
+    if (room.game.bidding.round === 1) {
+        if (action === 'take') {
+            const bidder = room.game.players.find(p => p.id === ws.id);
+            bidder.hand.push(room.game.bidding.trumpCard);
+
+            room.game.trumpSuit = room.game.bidding.trumpCard.suit;
+
+            room.game.bidding.trumpCard = null;
+            room.game.bidding.takerId = ws.id;
+            room.game.bidding.phase = 0;
+        }
+        else if (action === 'pass') {
+            if (room.game.bidding.currentBidderId === room.game.dealerId) room.game.bidding.phase = 2
+            
+            const currentIndex = room.game.players.findIndex(p => p.id === ws.id);
+            const nextIndex = (currentIndex + 1) % 4;
+            room.game.bidding.currentBidderId = room.game.players[nextIndex].id;
+        }
+    } else if (room.game.bidding.phase === 2) {
+        if (action === 'pass') {
+            if (room.game.bidding.currentBidderId === room.game.dealerId) {
+                broadcastEndGame(roomCode);
+                return;
+            }
+
+            const currentIndex = room.game.players.findIndex(p => p.id === ws.id);
+            const nextIndex = (currentIndex + 1) % 4;
+            room.game.bidding.currentBidderId = room.game.players[nextIndex].id;
+        } else {
+            const bidder = room.game.players.find(p => p.id === ws.id);
+            bidder.hand.push(room.game.bidding.trumpCard);
+
+            room.game.bidding.trumpCard = null;
+            room.game.bidding.takerId = ws.id;
+            room.game.bidding.phase = 0;
+
+            room.game.trumpSuit = action
+        }
     }
 
     broadcastGameState(roomCode);
@@ -256,7 +282,8 @@ export function broadcastGameState(roomCode) {
             myHand: [],
             players: [],
             dealerId: fullGameState.dealerId,
-            bidding: fullGameState.bidding
+            bidding: fullGameState.bidding,
+            trumpSuit: fullGameState.trumpSuit
         };
 
         const myPlayerState = fullGameState.players.find(p => p.id === player.id);
