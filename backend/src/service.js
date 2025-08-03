@@ -136,7 +136,7 @@ export async function handleBidAction(ws, { action }) {
     if (!room || !room.game) throw new Error('Game not found')
     if (ws.id !== room.game.bidding.currentBidderId) throw new Error("Not your turn to bid")
 
-    if (room.game.bidding.round === 1) {
+    if (room.game.bidding.phase === 1) {
         if (action === 'take') {
             const bidder = room.game.players.find(p => p.id === ws.id);
             bidder.hand.push(room.game.bidding.trumpCard);
