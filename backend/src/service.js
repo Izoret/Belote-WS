@@ -143,13 +143,11 @@ export async function handleBidAction(ws, { action }) {
         room.game.bidding.phase = false;
     }
     else if (action === 'pass') {
+        if (room.game.bidding.currentBidderId === room.game.dealerId) room.game.bidding.phase = false
+        
         const currentIndex = room.game.players.findIndex(p => p.id === ws.id);
         const nextIndex = (currentIndex + 1) % 4;
         room.game.bidding.currentBidderId = room.game.players[nextIndex].id;
-
-        if (room.game.bidding.currentBidderId === room.game.dealerId) {
-            room.game.biddingPhase = false;
-        }
     }
 
     broadcastGameState(roomCode);
