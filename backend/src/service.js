@@ -145,7 +145,11 @@ export async function handleBidAction(ws, { action }) {
 
             room.game.bidding.trumpCard = null;
             room.game.bidding.takerId = ws.id;
-            room.game.bidding.phase = 0;
+            room.game.bidding.phase = 0
+
+            setTimeout(async () => {
+                await dealFinalCards(roomCode);
+            }, 2000);
         }
         else if (action === 'pass') {
             if (room.game.bidding.currentBidderId === room.game.dealerId) room.game.bidding.phase = 2
@@ -173,8 +177,29 @@ export async function handleBidAction(ws, { action }) {
             room.game.bidding.phase = 0;
 
             room.game.trumpSuit = action
+
+            setTimeout(async () => {
+                await dealFinalCards(roomCode);
+            }, 2000);
         }
     }
+
+    broadcastGameState(roomCode);
+}
+
+async function dealFinalCards(roomCode) {
+    const room = rooms.get(roomCode);
+    if (!room || !room.game) return;
+
+    const taker = room.game.players.find(p => p.id === room.game.bidding.takerId);
+
+    room.game.players.forEach(player => {
+        if (player.id !== taker.id) {
+            logic.dealCards([player], room.game.deck, 3);
+        }
+    });
+
+    logic.dealCards([taker], room.game.deck, 2);
 
     broadcastGameState(roomCode);
 }
