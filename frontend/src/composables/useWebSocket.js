@@ -52,6 +52,7 @@ export function useWebSocket() {
             }
             store.gameState.myHand = payload.myHand
             store.gameState.players = payload.players
+            store.gameState.trumpCard = payload.trumpCard
             break
           case 'dealing_start':
               store.gameState.dealingAnimation = {

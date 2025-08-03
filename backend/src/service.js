@@ -84,26 +84,32 @@ export async function handleStartGame(ws) {
             name: p.name,
             team: p.team,
             hand: []
-        }))
+        })),
+        trumpCard: null
     }
 
     broadcastGameState(roomCode)
 
     await new Promise(resolve => setTimeout(resolve, 1000))
 
-    broadcastDealingAnimation(roomCode, 3);
-    await new Promise(resolve => setTimeout(resolve, 3000));
+//    broadcastDealingAnimation(roomCode, 3);
+  //  await new Promise(resolve => setTimeout(resolve, 3000));
 
     logic.dealCards(room.game.players, room.game.deck, 3)
     broadcastGameState(roomCode)
 
     await new Promise(resolve => setTimeout(resolve, 2000))
 
-    broadcastDealingAnimation(roomCode, 2);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+  //  broadcastDealingAnimation(roomCode, 2);
+    //await new Promise(resolve => setTimeout(resolve, 2000));
 
     logic.dealCards(room.game.players, room.game.deck, 2)
     broadcastGameState(roomCode)
+
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    room.game.trumpCard = room.game.deck.pop();
+    broadcastGameState(roomCode);
 }
 
 export async function handleEndGame(ws, {}) {
@@ -228,7 +234,8 @@ export function broadcastGameState(roomCode) {
             type: 'game_state_update',
             payload: {
                 ...personalGameState,
-                dealerId: fullGameState.dealerId
+                dealerId: fullGameState.dealerId,
+                trumpCard: fullGameState.trumpCard
             }
         }));
     });

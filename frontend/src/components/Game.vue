@@ -82,6 +82,21 @@ function startDealingAnimation(cardCount, dealerPos) {
         }
     }, 20);
 }
+
+function getSuitSymbol(suit) {
+    if (!suit) return '';
+    const symbols = {
+        hearts: '♥',
+        diamonds: '♦',
+        clubs: '♣',
+        spades: '♠'
+    };
+    return symbols[suit];
+}
+
+function isRedSuit(suit) {
+    return suit === 'hearts' || suit === 'diamonds';
+}
 </script>
 
 <template>
@@ -151,11 +166,19 @@ function startDealingAnimation(cardCount, dealerPos) {
       <div class="table-center">
         <div class="center-content">
           <div class="atout-section">
-            <img :src="getCardImage()" alt="Carte atout" class="atout-card" />
+            <img :src="getCardImage(store.gameState.trumpCard)" alt="Carte atout" class="atout-card" />
             <div class="atout-info">
-              <p class="atout-text">Atout</p>
-              <div class="atout-suit">♠</div>
-            </div>
+              <p class="atout-text">Atout proposé</p>
+                <div 
+    class="atout-suit" 
+    :class="{
+        'suit-red': isRedSuit(store.gameState.trumpCard?.suit),
+        'suit-black': !isRedSuit(store.gameState.trumpCard?.suit)
+    }"
+>
+    {{ getSuitSymbol(store.gameState.trumpCard?.suit) }}
+</div>        
+    </div>
           </div>
           
           <!-- Zone pour les cartes jouées -->
@@ -304,6 +327,19 @@ function startDealingAnimation(cardCount, dealerPos) {
   transition: all 0.2s ease;
   width: 100%;
   height: auto;
+}
+
+.atout-suit {
+    font-size: 2em;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+.suit-red {
+    color: #ff4d4d;
+}
+
+.suit-black {
+    color: #333;
 }
 
 /* Cartes du joueur du haut (inversées) */
