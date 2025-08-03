@@ -1,6 +1,6 @@
 import { WebSocketServer } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
-import { handleMessage, handleDisconnect } from './controller.js';
+import { handleMessage, handleDisconnect } from './handlers/mainController.js';
 
 const wss = new WebSocketServer({ port: 8080 });
 
@@ -15,4 +15,3 @@ wss.on('connection', ws => {
     ws.on('close', () => handleDisconnect(ws));
 });
 
-export const rooms = new Map();
