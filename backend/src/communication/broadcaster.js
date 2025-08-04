@@ -30,10 +30,10 @@ export function broadcastChatMsg(roomCode, messagePayload) {
 }
 
 export function broadcastGameState(roomCode) {
-    const room = rooms.get(roomCode);
+    const room = rooms.get(roomCode)
     if (!room || !room.game) return;
 
-    const fullGameState = room.game;
+    const fullGameState = room.game
 
     room.players.forEach(player => {
         const clientGameState = {
@@ -46,8 +46,10 @@ export function broadcastGameState(roomCode) {
             })),
             dealerId: fullGameState.dealerId,
             bidding: fullGameState.bidding,
-            trumpSuit: fullGameState.trumpSuit
-        };
+            trumpSuit: fullGameState.trumpSuit,
+            currentPlayerId: fullGameState.currentPlayerId,
+            tricks: fullGameState.tricks
+        }
 
         const myPlayerState = fullGameState.players.find(p => p.id === player.id);
         if (myPlayerState) {

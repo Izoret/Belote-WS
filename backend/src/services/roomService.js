@@ -1,5 +1,5 @@
 import { rooms } from '../state.js'
-import * as beloteLogic from '../logic/beloteLogic.js'
+import * as playersLogic from '../logic/playersLogic.js'
 import * as broadcaster from '../communication/broadcaster.js'
 import * as smallcaster from '../communication/smallcaster.js'
 
@@ -14,7 +14,7 @@ export function joinRoom(ws, { roomCode, playerName }) {
     const room = rooms.get(roomCode)
     const player = { id: ws.id, name: playerName, team: null, ws: ws }
 
-    beloteLogic.validatePlayerInRoom(room, player)
+    playersLogic.validatePlayerInRoom(room, player)
     room.players.push(player)
 
     console.log(`Le joueur ${playerName} (${ws.id}) a rejoint la room ${roomCode}`)

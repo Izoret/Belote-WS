@@ -27,10 +27,13 @@ export const store = reactive(
         bidding: {
             phase: 0,
             trumpCard: null,
-            currendBidderId: null,
             takerId: null
         },
-        trumpSuit: null
+        currentPlayerId: null,
+        trumpSuit: null,
+        tricks: {
+            currentTrick: []
+        }
     },
 })
 

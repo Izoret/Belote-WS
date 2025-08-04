@@ -1,5 +1,6 @@
 import { rooms } from '../state.js'
 import * as beloteLogic from '../logic/beloteLogic.js'
+import * as playersLogic from '../logic/playersLogic.js'
 import * as broadcaster from '../communication/broadcaster.js'
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
@@ -10,8 +11,8 @@ export async function startGame(ws) {
     if (!room) throw new Error('Room non trouvée')
     if (room.game) throw new Error('La partie a déjà commencé')
 
-    const teams = beloteLogic.validateTeams(room.players)
-    const orderedPlayers = beloteLogic.determinePlayerOrder(room.players, teams)
+    const teams = playersLogic.validateTeams(room.players)
+    const orderedPlayers = playersLogic.determinePlayerOrder(room.players, teams)
     const deck = beloteLogic.shuffleDeck(beloteLogic.createDeck())
 
     console.log(`Début de partie dans la room ${roomCode} !!`)
@@ -19,9 +20,22 @@ export async function startGame(ws) {
     room.game = {
         deck,
         dealerId: ws.id,
-        players: orderedPlayers.map(p => ({ id: p.id, name: p.name, team: p.team, hand: [] })),
-        bidding: { phase: 0, trumpCard: null, currentBidderId: null, takerId: null },
-        trumpSuit: null
+        players: orderedPlayers.map(p => ({
+            id: p.id, 
+            name: p.name, 
+            team: p.team, 
+            hand: [] 
+        })),
+        bidding: {
+            phase: 0,
+            trumpCard: null, 
+            takerId: null
+        },
+        trumpSuit: null,
+        currentPlayerId: null,
+        tricks: {
+            currentTrick: [],
+        }
     }
 
     broadcaster.broadcastGameState(roomCode)
@@ -42,11 +56,14 @@ export async function startGame(ws) {
     broadcaster.broadcastGameState(roomCode)
     await sleep(2000)
 
-    // Start bidding
+    await startBidding(ws, roomCode)
+}
+
+async function startBidding(ws, roomCode) {
     room.game.bidding.phase = 1
     const dealerIndex = room.game.players.findIndex(p => p.id === ws.id)
     const firstBidderIndex = (dealerIndex + 1) % 4
-    room.game.bidding.currentBidderId = room.game.players[firstBidderIndex].id
+    room.game.currentPlayerId = room.game.players[firstBidderIndex].id
 
     broadcaster.broadcastGameState(roomCode)
 }
@@ -56,7 +73,7 @@ export async function handleBid(ws, { action }) {
     const room = rooms.get(roomCode)
     const { game } = room
     if (!game) throw new Error('Game not found')
-    if (ws.id !== game.bidding.currentBidderId) throw new Error("Not your turn to bid")
+    if (ws.id !== game.currentPlayerId) throw new Error("Not your turn to bid")
 
     const bidderIndex = game.players.findIndex(p => p.id === ws.id)
     const nextBidder = game.players[(bidderIndex + 1) % 4]
@@ -65,16 +82,16 @@ export async function handleBid(ws, { action }) {
         if (action === 'take') {
             takeTrumpCard(ws, game, game.bidding.trumpCard.suit)
         } else if (action === 'pass') {
-            if (game.bidding.currentBidderId === game.dealerId) game.bidding.phase = 2
-            game.bidding.currentBidderId = nextBidder.id
+            if (game.currentPlayerId === game.dealerId) game.bidding.phase = 2
+            game.currentPlayerId = nextBidder.id
         }
     } else if (game.bidding.phase === 2) {
         if (action === 'pass') {
-             if (game.bidding.currentBidderId === game.dealerId) {
+             if (game.currentPlayerId === game.dealerId) {
                 endGame(ws) // Everyone passed, end the game
                 return
             }
-            game.bidding.currentBidderId = nextBidder.id
+            game.currentPlayerId = nextBidder.id
         } else {
             takeTrumpCard(ws, game, action)
         }
@@ -106,6 +123,68 @@ async function dealFinalCards(roomCode) {
     })
 
     broadcaster.broadcastGameState(roomCode)
+
+    await sleep(1000)
+
+    startTricking(room)
+}
+
+async function startTricking(ws) {
+    const room = room.get(roomCode)
+    if (!room || !room.game) return
+
+    const dealerIndex = room.game.players.findIndex(p => p.id === room.game.dealerId)
+    const firstPlayerIndex = (dealerIndex + 1) % 4
+    room.game.currentPlayerId = room.game.players[firstPlayerIndex].id
+
+    broadcaster.broadcastGameState(ws.roomCode)
+}
+
+export async function playCard(ws, { card }) {
+    const roomCode = ws.roomCode;
+    const room = rooms.get(roomCode);
+    const game = room.game;
+    if (!game || ws.id !== game.currentPlayerId) return;
+
+    const player = game.players.find(p => p.id === ws.id);
+    const cardIndex = player.hand.findIndex(c => c.suit === card.suit && c.value === card.value);
+
+    if (cardIndex === -1) throw new Error("Card not in hand.");
+
+    // TODO Basic validation passed, for now we trust the client on rules
+    // A complete implementation would validate the move here (e.g., beloteLogic.isMoveValid(...))
+
+    player.hand.splice(cardIndex, 1);
+    game.currentTrick.push({ card, playerId: ws.id });
+
+    // If trick is not full, pass turn to next player
+    if (game.currentTrick.length < 4) {
+        const currentPlayerIndex = game.players.findIndex(p => p.id === ws.id);
+        const nextPlayerIndex = (currentPlayerIndex + 1) % 4;
+        game.currentPlayerId = game.players[nextPlayerIndex].id;
+    } else {
+        // Trick is complete, determine winner
+        const winnerId = beloteLogic.determineTrickWinner(game.currentTrick, game.trumpSuit);
+        const winner = game.players.find(p => p.id === winnerId);
+
+        if (winner.team === 1) console.log("team 1 won the trick !!")
+        else console.log("team blue won the trick!!")
+
+        game.currentPlayerId = winnerId; // Winner starts the next trick
+        broadcaster.broadcastGameState(roomCode);
+
+        await sleep(2500); // Wait for players to see the result
+        game.currentTrick = [];
+
+        // Check for end of game (8 tricks played)
+        if (player.hand.length === 0) {
+            console.log(`8 tricks played. Game over for room ${roomCode}`);
+            endGame(ws);
+            return;
+        }
+    }
+
+    broadcaster.broadcastGameState(roomCode);
 }
 
 export function endGame(ws) {

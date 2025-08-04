@@ -19,7 +19,10 @@ export async function handleMessage(ws, message) {
                 break;
             case "bid_action":
                 await gameService.handleBid(ws, payload);
-                break;
+                break
+            case 'play_card':
+                gameService.playCard(ws, payload)
+                break
             case "change_team":
                 await roomService.changeTeam(ws, payload);
                 break;

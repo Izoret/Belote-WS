@@ -54,6 +54,8 @@ export function useWebSocket() {
                   store.game.players = payload.players
                   store.game.bidding = payload.bidding
                   store.game.trumpSuit = payload.trumpSuit
+                  store.game.currentPlayerId = payload.currentPlayerId
+                  store.game.tricks = payload.tricks
                   break
               case 'dealing_start':
                   store.game.dealingAnimation = {
