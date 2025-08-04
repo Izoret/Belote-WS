@@ -130,7 +130,7 @@ async function dealFinalCards(roomCode) {
 }
 
 async function startTricking(ws) {
-    const room = room.get(roomCode)
+    const room = rooms.get(ws.roomCode)
     if (!room || !room.game) return
 
     const dealerIndex = room.game.players.findIndex(p => p.id === room.game.dealerId)
@@ -155,26 +155,26 @@ export async function playCard(ws, { card }) {
     // A complete implementation would validate the move here (e.g., beloteLogic.isMoveValid(...))
 
     player.hand.splice(cardIndex, 1);
-    game.currentTrick.push({ card, playerId: ws.id });
+    game.tricks.currentTrick.push({ card, playerId: ws.id });
 
     // If trick is not full, pass turn to next player
-    if (game.currentTrick.length < 4) {
+    if (game.tricks.currentTrick.length < 4) {
         const currentPlayerIndex = game.players.findIndex(p => p.id === ws.id);
         const nextPlayerIndex = (currentPlayerIndex + 1) % 4;
         game.currentPlayerId = game.players[nextPlayerIndex].id;
     } else {
         // Trick is complete, determine winner
-        const winnerId = beloteLogic.determineTrickWinner(game.currentTrick, game.trumpSuit);
+        const winnerId = beloteLogic.determineTrickWinner(game.tricks.currentTrick, game.trumpSuit);
         const winner = game.players.find(p => p.id === winnerId);
 
         if (winner.team === 1) console.log("team 1 won the trick !!")
-        else console.log("team blue won the trick!!")
+        else console.log("team 2 won the trick!!")
 
         game.currentPlayerId = winnerId; // Winner starts the next trick
         broadcaster.broadcastGameState(roomCode);
 
         await sleep(2500); // Wait for players to see the result
-        game.currentTrick = [];
+        game.tricks.currentTrick = [];
 
         // Check for end of game (8 tricks played)
         if (player.hand.length === 0) {
