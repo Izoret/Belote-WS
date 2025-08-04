@@ -131,7 +131,7 @@ const playedCardsByPosition = computed(() => {
         [orderedPlayers.value[3].id]: 'east',
     };
 
-    store.game.currentTrick.forEach(playedCard => {
+    store.game.tricks.currentTrick.forEach(playedCard => {
         const position = positionMap[playedCard.playerId];
         if (position) {
             slots[position] = playedCard.card;

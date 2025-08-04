@@ -56,16 +56,16 @@ export async function startGame(ws) {
     broadcaster.broadcastGameState(roomCode)
     await sleep(2000)
 
-    await startBidding(ws, roomCode)
+    await startBidding(ws, room)
 }
 
-async function startBidding(ws, roomCode) {
+async function startBidding(ws, room) {
     room.game.bidding.phase = 1
     const dealerIndex = room.game.players.findIndex(p => p.id === ws.id)
     const firstBidderIndex = (dealerIndex + 1) % 4
     room.game.currentPlayerId = room.game.players[firstBidderIndex].id
 
-    broadcaster.broadcastGameState(roomCode)
+    broadcaster.broadcastGameState(ws.roomCode)
 }
 
 export async function handleBid(ws, { action }) {
