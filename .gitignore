@@ -29,3 +29,5 @@ jspm_packages/
 .env
 
 .*.swp
+
+.idea
