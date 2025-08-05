@@ -1,4 +1,4 @@
-import { rooms } from '../state.js'
+import {rooms} from '../state.js'
 import * as beloteLogic from '../logic/beloteLogic.js'
 import * as playersLogic from '../logic/playersLogic.js'
 import * as broadcaster from '../communication/broadcaster.js'
@@ -21,14 +21,14 @@ export async function startGame(ws) {
         deck,
         dealerId: ws.id,
         players: orderedPlayers.map(p => ({
-            id: p.id, 
-            name: p.name, 
-            team: p.team, 
-            hand: [] 
+            id: p.id,
+            name: p.name,
+            team: p.team,
+            hand: []
         })),
         bidding: {
             phase: 0,
-            trumpCard: null, 
+            trumpCard: null,
             takerId: null
         },
         trumpSuit: null,
@@ -50,7 +50,7 @@ export async function startGame(ws) {
     beloteLogic.dealCards(room.game.players, room.game.deck, 2)
     broadcaster.broadcastGameState(roomCode)
     await sleep(2000)
-    
+
     // Reveal trump card
     room.game.bidding.trumpCard = room.game.deck.pop()
     broadcaster.broadcastGameState(roomCode)
@@ -68,10 +68,10 @@ async function startBidding(ws, room) {
     broadcaster.broadcastGameState(ws.roomCode)
 }
 
-export async function handleBid(ws, { action }) {
+export async function handleBid(ws, {action}) {
     const roomCode = ws.roomCode
     const room = rooms.get(roomCode)
-    const { game } = room
+    const {game} = room
     if (!game) throw new Error('Game not found')
     if (ws.id !== game.currentPlayerId) throw new Error("Not your turn to bid")
 
@@ -87,7 +87,7 @@ export async function handleBid(ws, { action }) {
         }
     } else if (game.bidding.phase === 2) {
         if (action === 'pass') {
-             if (game.currentPlayerId === game.dealerId) {
+            if (game.currentPlayerId === game.dealerId) {
                 endGame(ws) // Everyone passed, end the game
                 return
             }
@@ -102,18 +102,18 @@ export async function handleBid(ws, { action }) {
 
 async function takeTrumpCard(ws, game, newSuit) {
     const bidder = game.players.find(p => p.id === ws.id)
-             bidder.hand.push(game.bidding.trumpCard)
-             game.trumpSuit = newSuit
-             game.bidding.trumpCard = null
+    bidder.hand.push(game.bidding.trumpCard)
+    game.trumpSuit = newSuit
+    game.bidding.trumpCard = null
     game.bidding.takerId = ws.id
     game.bidding.phase = 0
     broadcaster.broadcastGameState(ws.roomCode)
     await sleep(2000)
-    await dealFinalCards(ws.roomCode)
+    await dealFinalCards(ws)
 }
 
-async function dealFinalCards(roomCode) {
-    const room = rooms.get(roomCode)
+async function dealFinalCards(ws) {
+    const room = rooms.get(ws.roomCode)
     if (!room || !room.game) return
 
     const taker = room.game.players.find(p => p.id === room.game.bidding.takerId)
@@ -122,16 +122,15 @@ async function dealFinalCards(roomCode) {
         beloteLogic.dealCards([player], room.game.deck, dealCount)
     })
 
-    broadcaster.broadcastGameState(roomCode)
+    broadcaster.broadcastGameState(ws.roomCode)
 
     await sleep(1000)
 
-    startTricking(room)
+    startTricking(ws)
 }
 
 async function startTricking(ws) {
     const room = rooms.get(ws.roomCode)
-    if (!room || !room.game) return
 
     const dealerIndex = room.game.players.findIndex(p => p.id === room.game.dealerId)
     const firstPlayerIndex = (dealerIndex + 1) % 4
@@ -140,22 +139,22 @@ async function startTricking(ws) {
     broadcaster.broadcastGameState(ws.roomCode)
 }
 
-export async function playCard(ws, { card }) {
+export async function playCard(ws, {card}) {
     const roomCode = ws.roomCode;
     const room = rooms.get(roomCode);
     const game = room.game;
     if (!game || ws.id !== game.currentPlayerId) return;
 
     const player = game.players.find(p => p.id === ws.id);
-    const cardIndex = player.hand.findIndex(c => c.suit === card.suit && c.value === card.value);
+    const cardServer = player.hand.find(c => c.suit === card.suit && c.value === card.value);
 
-    if (cardIndex === -1) throw new Error("Card not in hand.");
+    if (!cardServer) throw new Error("Card not found in hand.");
 
-    // TODO Basic validation passed, for now we trust the client on rules
-    // A complete implementation would validate the move here (e.g., beloteLogic.isMoveValid(...))
+//    if (!beloteLogic.isCardAllowed(card, game.tricks.currentTrick, game.trumpSuit))
+    if (cardServer.unplayable) throw new Error("Card not allowed for current trick !")
 
-    player.hand.splice(cardIndex, 1);
-    game.tricks.currentTrick.push({ card, playerId: ws.id });
+    player.hand.splice(cardServer, 1);
+    game.tricks.currentTrick.push({card, playerId: ws.id});
 
     // If trick is not full, pass turn to next player
     if (game.tricks.currentTrick.length < 4) {
@@ -164,7 +163,7 @@ export async function playCard(ws, { card }) {
         game.currentPlayerId = game.players[nextPlayerIndex].id;
     } else {
         // Trick is complete, determine winner
-        const winnerId = beloteLogic.determineTrickWinner(game.tricks.currentTrick, game.trumpSuit);
+        const winnerId = beloteLogic.trickMaster(game.tricks.currentTrick, game.trumpSuit);
         const winner = game.players.find(p => p.id === winnerId);
 
         if (winner.team === 1) console.log("team 1 won the trick !!")
@@ -184,6 +183,14 @@ export async function playCard(ws, { card }) {
         }
     }
 
+    room.game.players.forEach(player => {
+        if (game.tricks.currentTrick.some(play => play.playerId === ws.id)) return
+
+        player.hand.forEach(card => {
+            card.unplayable = !beloteLogic.isCardAllowed(card, game.tricks.currentTrick, game.trumpSuit)
+        })
+    })
+
     broadcaster.broadcastGameState(roomCode);
 }
 
@@ -192,7 +199,7 @@ export function endGame(ws) {
     const room = rooms.get(roomCode)
     if (!room) throw new Error('Room non trouvée.')
     if (!room.game) throw new Error("Il n'y a pas de partie en cours.")
-    
+
     console.log(`Partie terminée dans la room ${roomCode}.`)
     room.game = null
     broadcaster.broadcastEndGame(roomCode)

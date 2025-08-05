@@ -4,7 +4,7 @@ export function createDeck() {
     const deck = [];
     for (const suit of suits) {
         for (const value of values) {
-            deck.push({ suit, value });
+            deck.push({suit, value});
         }
     }
     return deck;
@@ -36,15 +36,22 @@ function getCardPower(card, trumpSuit) {
         '9': isTrump ? 9 : 3,
         'jack': isTrump ? 10 : 4,
         'queen': 5,
-        'king': 6, 
+        'king': 6,
         '10': 7,
         'ace': 8
     };
-    let power = valueMap[card.value];
-    return power;
+    return valueMap[card.value];
 }
 
-export function determineTrickWinner(trick, trumpSuit) {
+export function isCardAllowed(card, trick, trumpSuit) {
+    if (trick.length === 0) return true
+
+    const askedSuit = trick[0].card.suit
+
+    return card.suit === askedSuit
+}
+
+export function trickMaster(trick, trumpSuit) {
     if (!trick || trick.length === 0) return null;
 
     let winningCard = trick[0];

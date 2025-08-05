@@ -14,4 +14,3 @@ wss.on('connection', ws => {
     ws.on('message', message => handleMessage(ws, message));
     ws.on('close', () => handleDisconnect(ws));
 });
-
