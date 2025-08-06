@@ -50,12 +50,7 @@ export function useWebSocket() {
                       store.isInGame = true
                       store.isInLobby = false
                   }
-                  store.game.myHand = payload.myHand
-                  store.game.players = payload.players
-                  store.game.bidding = payload.bidding
-                  store.game.trumpSuit = payload.trumpSuit
-                  store.game.currentPlayerId = payload.currentPlayerId
-                  store.game.tricks = payload.tricks
+                  store.game = payload
                   break
               case 'dealing_start':
                   store.game.dealingAnimation = {

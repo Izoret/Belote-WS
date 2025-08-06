@@ -41,17 +41,18 @@ export async function startGame(ws) {
     broadcaster.broadcastGameState(roomCode)
     await sleep(1000)
 
-    // First deal
-    beloteLogic.dealCards(room.game.players, room.game.deck, 3)
+    const nb_first_deal = 3
+    beloteLogic.dealCards(room.game.players, room.game.deck, nb_first_deal)
     broadcaster.broadcastGameState(roomCode)
+    broadcaster.broadcastDealingAnimation(roomCode, nb_first_deal)
     await sleep(2000)
 
-    // Second deal
-    beloteLogic.dealCards(room.game.players, room.game.deck, 2)
+    const nb_second_deal = 2
+    beloteLogic.dealCards(room.game.players, room.game.deck, nb_second_deal)
     broadcaster.broadcastGameState(roomCode)
+    broadcaster.broadcastDealingAnimation(roomCode, nb_second_deal)
     await sleep(2000)
 
-    // Reveal trump card
     room.game.bidding.trumpCard = room.game.deck.pop()
     broadcaster.broadcastGameState(roomCode)
     await sleep(2000)
