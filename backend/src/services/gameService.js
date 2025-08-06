@@ -80,7 +80,7 @@ export async function handleBid(ws, {action}) {
 
     if (game.bidding.phase === 1) {
         if (action === 'take') {
-            takeTrumpCard(ws, game, game.bidding.trumpCard.suit)
+            await takeTrumpCard(ws, game, game.bidding.trumpCard.suit)
         } else if (action === 'pass') {
             if (game.currentPlayerId === game.dealerId) game.bidding.phase = 2
             game.currentPlayerId = nextBidder.id
@@ -93,7 +93,7 @@ export async function handleBid(ws, {action}) {
             }
             game.currentPlayerId = nextBidder.id
         } else {
-            takeTrumpCard(ws, game, action)
+            await takeTrumpCard(ws, game, action)
         }
     }
 
@@ -126,7 +126,7 @@ async function dealFinalCards(ws) {
 
     await sleep(1000)
 
-    startTricking(ws)
+    await startTricking(ws)
 }
 
 async function startTricking(ws) {

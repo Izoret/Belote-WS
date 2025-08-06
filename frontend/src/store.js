@@ -19,6 +19,7 @@ export const store = reactive(
         myHand: [],
         players: [],
         dealerId: null,
+        deckSize: 0,
         dealingAnimation: {
             active: false,
             cardCount: 0,

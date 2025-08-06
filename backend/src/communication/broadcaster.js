@@ -44,6 +44,7 @@ export function broadcastGameState(roomCode) {
                 team: p.team,
                 handSize: p.hand.length
             })),
+            deckSize: fullGameState.deck.length,
             dealerId: fullGameState.dealerId,
             bidding: fullGameState.bidding,
             trumpSuit: fullGameState.trumpSuit,
