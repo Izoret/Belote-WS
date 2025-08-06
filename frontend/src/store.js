@@ -15,9 +15,26 @@ export const store = reactive(
     isInLobby: false,
     isInGame: false,
     
-    gameData: {
+    game: {
+        myHand: [],
         players: [],
-        atoutPropose: null,
+        dealerId: null,
+        deckSize: 0,
+        dealingAnimation: {
+            active: false,
+            cardCount: 0,
+            dealerPosition: null
+        },
+        bidding: {
+            phase: 0,
+            trumpCard: null,
+            takerId: null
+        },
+        currentPlayerId: null,
+        trumpSuit: null,
+        tricks: {
+            currentTrick: []
+        }
     },
 })
 
