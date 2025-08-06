@@ -150,10 +150,9 @@ export async function playCard(ws, {card}) {
 
     if (!cardServer) throw new Error("Card not found in hand.");
 
-//    if (!beloteLogic.isCardAllowed(card, game.tricks.currentTrick, game.trumpSuit))
     if (cardServer.unplayable) throw new Error("Card not allowed for current trick !")
 
-    player.hand.splice(cardServer, 1);
+    player.hand.splice(player.hand.indexOf(cardServer), 1);
     game.tricks.currentTrick.push({card, playerId: ws.id});
 
     // If trick is not full, pass turn to next player
@@ -163,7 +162,7 @@ export async function playCard(ws, {card}) {
         game.currentPlayerId = game.players[nextPlayerIndex].id;
     } else {
         // Trick is complete, determine winner
-        const winnerId = beloteLogic.trickMaster(game.tricks.currentTrick, game.trumpSuit);
+        const winnerId = beloteLogic.trickMaster(game.tricks.currentTrick, game.trumpSuit).playerId
         const winner = game.players.find(p => p.id === winnerId);
 
         if (winner.team === 1) console.log("team 1 won the trick !!")
@@ -184,11 +183,19 @@ export async function playCard(ws, {card}) {
     }
 
     room.game.players.forEach(player => {
-        if (game.tricks.currentTrick.some(play => play.playerId === ws.id)) return
+        if (game.tricks.currentTrick.some(play => play.playerId === player.id))
+            player.hand.forEach(card => {
+                card.unplayable = false
+            })
+        else {
+            const cardsAllowed = beloteLogic.cardsAllowedInHandForTrick(
+                player.hand, game.tricks.currentTrick, room.game.players, game.trumpSuit, player.team
+            )
 
-        player.hand.forEach(card => {
-            card.unplayable = !beloteLogic.isCardAllowed(card, game.tricks.currentTrick, game.trumpSuit)
-        })
+            player.hand.forEach(card => {
+                card.unplayable = !cardsAllowed.includes(card);
+            })
+        }
     })
 
     broadcaster.broadcastGameState(roomCode);

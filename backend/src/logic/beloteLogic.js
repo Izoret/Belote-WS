@@ -31,46 +31,96 @@ export function dealCards(players, deck, count) {
 function getCardPower(card, trumpSuit) {
     const isTrump = card.suit === trumpSuit;
     const valueMap = {
-        '7': 1,
-        '8': 2,
-        '9': isTrump ? 9 : 3,
-        'jack': isTrump ? 10 : 4,
-        'queen': 5,
-        'king': 6,
-        '10': 7,
-        'ace': 8
-    };
-    return valueMap[card.value];
+        '7': 0,
+        '8': 0,
+        '9': 0,
+        'jack': 1,
+        'queen': 2,
+        'king': 3,
+        '10': 4,
+        'ace': 5
+    }
+    const trumpMap = {
+        '7': 6,
+        '8': 7,
+        'queen': 8,
+        'king': 9,
+        '10': 10,
+        'ace': 11,
+        '9': 12,
+        'jack': 13
+    }
+    return isTrump ? valueMap[card.value] : trumpMap[card.value]
 }
 
-export function isCardAllowed(card, trick, trumpSuit) {
-    if (trick.length === 0) return true
+export function cardsAllowedInHandForTrick(cards, trick, players, trumpSuit, team) {
+    // code en français pour que je m'y retrouve
 
-    const askedSuit = trick[0].card.suit
+    if (trick.length === 0) return cards
 
-    return card.suit === askedSuit
+    const couleurDemandee = trick[0].card.suit
+    const atoutDemande = couleurDemandee === trumpSuit
+    const cartesCouleurDemandee = cards.filter(card => card.suit === couleurDemandee)
+    const atouts = cards.filter(card => card.suit === trumpSuit)
+    const playMaitre = trickMaster(trick, trumpSuit)
+    const partenaireEstMaitre = players.find(p => p.id === playMaitre.playerId).team === team
+    const surcoupes = atouts.filter(card => getCardPower(card, trumpSuit) > getCardPower(playMaitre.card, trumpSuit))
+
+    if (cartesCouleurDemandee.length > 0) {
+        if (atoutDemande) {
+            if (partenaireEstMaitre)
+                return atouts
+            else {
+                if (surcoupes.length > 0) {
+                    return surcoupes
+                } else {
+                    return atouts
+                }
+            }
+        } else {
+            return cartesCouleurDemandee
+        }
+    } else {
+        if (atoutDemande) {
+            return cards
+        } else {
+            if (partenaireEstMaitre) {
+                return cards
+            } else {
+                if (atouts.length > 0) {
+                    if (surcoupes.length > 0) {
+                        return surcoupes
+                    } else {
+                        return atouts
+                    }
+                } else {
+                    return cards
+                }
+            }
+        }
+    }
 }
 
 export function trickMaster(trick, trumpSuit) {
     if (!trick || trick.length === 0) return null;
 
-    let winningCard = trick[0];
+    let playMaitre = trick[0];
     for (let i = 1; i < trick.length; i++) {
-        const currentCard = trick[i];
-        const winningPower = getCardPower(winningCard.card, trumpSuit);
-        const currentPower = getCardPower(currentCard.card, trumpSuit);
+        const currentPlay = trick[i];
+        const winningPower = getCardPower(playMaitre.card, trumpSuit);
+        const currentPower = getCardPower(currentPlay.card, trumpSuit);
 
         // A trump card beats a non-trump card
-        if (currentCard.card.suit === trumpSuit && winningCard.card.suit !== trumpSuit) {
-            winningCard = currentCard;
+        if (currentPlay.card.suit === trumpSuit && playMaitre.card.suit !== trumpSuit) {
+            playMaitre = currentPlay;
         }
         // If both are the same suit, the higher power wins
-        else if (currentCard.card.suit === winningCard.card.suit) {
+        else if (currentPlay.card.suit === playMaitre.card.suit) {
             if (currentPower > winningPower) {
-                winningCard = currentCard;
+                playMaitre = currentPlay;
             }
         }
     }
-    return winningCard.playerId;
+    return playMaitre
 }
 
