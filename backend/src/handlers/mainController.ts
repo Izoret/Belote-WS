@@ -1,6 +1,7 @@
 import * as roomService from '../services/roomService.js'
 import * as chatService from '../services/chatService.js'
 import * as gameService from '../services/gameService.js'
+import {endGameIfPanicked} from '../services/gameService.js'
 import WebSocket from 'ws'
 import {castError} from '../communication/smallcaster.js'
 
@@ -10,6 +11,9 @@ export async function handleMessage(ws: WebSocket, message: any) {
         const {type, payload} = data
 
         switch (type) {
+            case "reconnect":
+                roomService.reconnect(ws, payload.oldId)
+                break
             case "join_room":
                 roomService.joinOrCreateRoom(ws, payload.roomCode, payload.playerName)
                 break
@@ -28,9 +32,6 @@ export async function handleMessage(ws: WebSocket, message: any) {
             case "change_team":
                 roomService.changeTeam(ws, payload.newTeam)
                 break
-            case "reconnect":
-                roomService.reconnect(ws, payload.oldId)
-                break
             case "leave_room":
                 roomService.leaveRoom(ws)
                 break
@@ -42,6 +43,7 @@ export async function handleMessage(ws: WebSocket, message: any) {
         }
     } catch (error: any) {
         console.error(`Erreur pour le client ${ws.id}:`, error.message)
+        endGameIfPanicked(ws)
         castError(ws, error.message)
     }
 }

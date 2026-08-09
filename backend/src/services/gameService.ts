@@ -6,6 +6,7 @@ import {broadcastDealingAnimation, broadcastEndGame} from '../communication/broa
 import {getGameSafely, getRoomSafely, verifyTrumpCardExists} from '../logic/validationLogic.js'
 import WebSocket from 'ws'
 import {Card, Game, Player, Suit} from '../types/types.js'
+import {rooms} from '../state.js'
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -189,3 +190,12 @@ export function endGame(ws: WebSocket) {
     broadcastEndGame(room)
 }
 
+export function endGameIfPanicked(ws: WebSocket) {
+    if (!ws.roomCode) return
+    const room = rooms.get(ws.roomCode)
+    if (!room || !room.game) return
+
+    room.game = undefined
+    console.log(`fatal -> Partie achevée dans ${room.code}`)
+    broadcastEndGame(room)
+}
