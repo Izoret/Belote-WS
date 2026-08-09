@@ -14,7 +14,7 @@
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-.join-form, .lobby {
+#join-form, .lobby {
   display: flex;
   flex-direction: column;
   gap: 15px;
