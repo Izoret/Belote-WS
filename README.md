@@ -3,7 +3,7 @@
 Dans backend :
 
 - npm install
-- node src/app.js
+- node src/app.ts
 
 Dans frontend :
 

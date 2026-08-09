@@ -1,21 +1,20 @@
-import {rooms} from '../state.js'
 import * as beloteLogic from '../logic/beloteLogic.js'
 import * as playersLogic from '../logic/playersLogic.js'
-import * as broadcaster from '../communication/broadcaster.js'
+import {castGameStateIndividually} from '../communication/smallcaster.js'
+import {broadcastDealingAnimation, broadcastEndGame} from '../communication/broadcaster.js'
+import {getRoomSafely} from '../logic/validationLogic.ts'
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
 export async function startGame(ws) {
-    const roomCode = ws.roomCode
-    const room = rooms.get(roomCode)
-    if (!room) throw new Error('Room non trouvée')
+    const room = getRoomSafely(ws)
     if (room.game) throw new Error('La partie a déjà commencé')
 
     const teams = playersLogic.validateTeams(room.players)
     const orderedPlayers = playersLogic.determinePlayerOrder(room.players, teams)
     const deck = beloteLogic.shuffleDeck(beloteLogic.createDeck())
 
-    console.log(`Début de partie dans la room ${roomCode} !!`)
+    console.log(`Début de partie dans la room !!`)
 
     room.game = {
         deck,
@@ -24,37 +23,37 @@ export async function startGame(ws) {
             id: p.id,
             name: p.name,
             team: p.team,
-            hand: []
+            hand: [],
         })),
         bidding: {
             phase: 0,
             trumpCard: null,
-            takerId: null
+            takerId: null,
         },
         trumpSuit: null,
         currentPlayerId: null,
         tricks: {
             currentTrick: [],
-        }
+        },
     }
 
-    broadcaster.broadcastGameState(roomCode)
+    castGameStateIndividually(room)
     await sleep(1000)
 
     const nb_first_deal = 3
     beloteLogic.dealCards(room.game.players, room.game.deck, nb_first_deal)
-    broadcaster.broadcastGameState(roomCode)
-    broadcaster.broadcastDealingAnimation(roomCode, nb_first_deal)
+    castGameStateIndividually(room)
+    broadcastDealingAnimation(room, nb_first_deal)
     await sleep(2000)
 
     const nb_second_deal = 2
     beloteLogic.dealCards(room.game.players, room.game.deck, nb_second_deal)
-    broadcaster.broadcastGameState(roomCode)
-    broadcaster.broadcastDealingAnimation(roomCode, nb_second_deal)
+    castGameStateIndividually(room)
+    broadcastDealingAnimation(room, nb_second_deal)
     await sleep(2000)
 
     room.game.bidding.trumpCard = room.game.deck.pop()
-    broadcaster.broadcastGameState(roomCode)
+    castGameStateIndividually(room)
     await sleep(2000)
 
     await startBidding(ws, room)
@@ -66,13 +65,12 @@ async function startBidding(ws, room) {
     const firstBidderIndex = (dealerIndex + 1) % 4
     room.game.currentPlayerId = room.game.players[firstBidderIndex].id
 
-    broadcaster.broadcastGameState(ws.roomCode)
+    castGameStateIndividually(room)
 }
 
 export async function handleBid(ws, {action}) {
-    const roomCode = ws.roomCode
-    const room = rooms.get(roomCode)
-    const {game} = room
+    const room = getRoomSafely(ws)
+    const game = room.game
     if (!game) throw new Error('Game not found')
     if (ws.id !== game.currentPlayerId) throw new Error("Not your turn to bid")
 
@@ -98,24 +96,26 @@ export async function handleBid(ws, {action}) {
         }
     }
 
-    broadcaster.broadcastGameState(roomCode)
+    castGameStateIndividually(room)
 }
 
 async function takeTrumpCard(ws, game, newSuit) {
+    const room = getRoomSafely(ws)
+
     const bidder = game.players.find(p => p.id === ws.id)
     bidder.hand.push(game.bidding.trumpCard)
     game.trumpSuit = newSuit
     game.bidding.trumpCard = null
     game.bidding.takerId = ws.id
     game.bidding.phase = 0
-    broadcaster.broadcastGameState(ws.roomCode)
+    castGameStateIndividually(room)
     await sleep(2000)
     await dealFinalCards(ws)
 }
 
 async function dealFinalCards(ws) {
-    const room = rooms.get(ws.roomCode)
-    if (!room || !room.game) return
+    const room = getRoomSafely(ws)
+    if (!room.game) return
 
     const taker = room.game.players.find(p => p.id === room.game.bidding.takerId)
     room.game.players.forEach(player => {
@@ -123,7 +123,7 @@ async function dealFinalCards(ws) {
         beloteLogic.dealCards([player], room.game.deck, dealCount)
     })
 
-    broadcaster.broadcastGameState(ws.roomCode)
+    castGameStateIndividually(room)
 
     await sleep(1000)
 
@@ -131,18 +131,17 @@ async function dealFinalCards(ws) {
 }
 
 async function startTricking(ws) {
-    const room = rooms.get(ws.roomCode)
+    const room = getRoomSafely(ws)
 
     const dealerIndex = room.game.players.findIndex(p => p.id === room.game.dealerId)
     const firstPlayerIndex = (dealerIndex + 1) % 4
     room.game.currentPlayerId = room.game.players[firstPlayerIndex].id
 
-    broadcaster.broadcastGameState(ws.roomCode)
+    castGameStateIndividually(room)
 }
 
 export async function playCard(ws, {card}) {
-    const roomCode = ws.roomCode
-    const room = rooms.get(roomCode)
+    const room = getRoomSafely(ws)
     const game = room.game
     if (!game || ws.id !== game.currentPlayerId) return
 
@@ -170,14 +169,14 @@ export async function playCard(ws, {card}) {
         else console.log("team 2 won the trick!!")
 
         game.currentPlayerId = winnerId; // Winner starts the next trick
-        broadcaster.broadcastGameState(roomCode)
+        castGameStateIndividually(room)
 
         await sleep(2500); // Wait for players to see the result
         game.tricks.currentTrick = []
 
         // Check for end of game (8 tricks played)
         if (player.hand.length === 0) {
-            console.log(`8 tricks played. Game over for room ${roomCode}`)
+            console.log(`8 tricks played. Game over for room.`)
             endGame(ws)
             return
         }
@@ -190,7 +189,7 @@ export async function playCard(ws, {card}) {
             })
         else {
             const cardsAllowed = beloteLogic.cardsAllowedInHandForTrick(
-                player.hand, game.tricks.currentTrick, room.game.players, game.trumpSuit, player.team
+                player.hand, game.tricks.currentTrick, room.game.players, game.trumpSuit, player.team,
             )
 
             player.hand.forEach(card => {
@@ -199,17 +198,15 @@ export async function playCard(ws, {card}) {
         }
     })
 
-    broadcaster.broadcastGameState(roomCode)
+    castGameStateIndividually(room)
 }
 
 export function endGame(ws) {
-    const roomCode = ws.roomCode
-    const room = rooms.get(roomCode)
-    if (!room) throw new Error('Room non trouvée.')
+    const room = getRoomSafely(ws)
     if (!room.game) throw new Error("Il n'y a pas de partie en cours.")
 
-    console.log(`Partie terminée dans la room ${roomCode}.`)
+    console.log(`Partie terminée dans la room.`)
     room.game = null
-    broadcaster.broadcastEndGame(roomCode)
+    broadcastEndGame(room)
 }
 

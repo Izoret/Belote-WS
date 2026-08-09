@@ -2,9 +2,10 @@ import {rooms} from '../state.js'
 import * as playersLogic from '../logic/playersLogic.js'
 import * as broadcaster from '../communication/broadcaster.js'
 import * as smallcaster from '../communication/smallcaster.js'
+import {getRoomSafely, validateJoinRequestInfo} from '../logic/validationLogic.ts'
 
-export function joinRoom(ws, {roomCode, playerName}) {
-    playersLogic.validateJoinRequestInfo(roomCode, playerName)
+export function joinOrCreateRoom(ws, {roomCode, playerName}) {
+    validateJoinRequestInfo(roomCode, playerName)
 
     roomCode = roomCode.toUpperCase()
     ws.roomCode = roomCode
@@ -47,8 +48,7 @@ export function leaveRoom(ws) {
 }
 
 export function changeTeam(ws, {team}) {
-    const room = rooms.get(ws.roomCode)
-    if (!room) throw new Error('Room non trouvée')
+    const room = getRoomSafely(ws)
 
     const player = room.players.find(p => p.id === ws.id)
     if (!player) throw new Error('Joueur non trouvé')
@@ -57,13 +57,13 @@ export function changeTeam(ws, {team}) {
     broadcaster.broadcastRoomUpdate(ws.roomCode)
 }
 
-export function reconnect(ws, {oldId}) {
+export function reconnect(ws: WebSocket, {oldId}) {
     let room, oldPlayer, roomCode
 
-    for (const [rc, r] of rooms.entries()) {
-        const pl = r.deadPlayers.find(p => p.id === oldId)
-        if (pl) {
-            [room, oldPlayer, roomCode] = [r, pl, rc]
+    for (const [code, room] of rooms.entries()) {
+        const player = room.deadPlayers.find(p => p.id === oldId)
+        if (player) {
+            [room, oldPlayer, roomCode] = [room, player, code]
             break
         }
     }

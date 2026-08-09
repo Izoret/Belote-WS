@@ -1,18 +1,20 @@
 import * as roomService from '../services/roomService.js'
 import * as chatService from '../services/chatService.js'
 import * as gameService from '../services/gameService.js'
+import WebSocket from 'ws'
+import {castError} from '../communication/smallcaster.js'
 
-export async function handleMessage(ws, message) {
+export async function handleMessage(ws: WebSocket, message: any) {
     try {
         const data = JSON.parse(message)
         const {type, payload} = data
 
         switch (type) {
             case "join_room":
-                await roomService.joinRoom(ws, payload)
+                await roomService.joinOrCreateRoom(ws, payload)
                 break
             case "send_message":
-                await chatService.sendMessage(ws, payload)
+                await chatService.sendChatMessage(ws, payload)
                 break
             case "start_game":
                 await gameService.startGame(ws, payload)
@@ -36,14 +38,14 @@ export async function handleMessage(ws, message) {
                 gameService.endGame(ws, payload)
                 break
             default:
-                throw new Error('Type de message non reconnu')
+                castError(ws, 'Type de message non reconnu')
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error(`Erreur pour le client ${ws.id}:`, error.message)
-        ws.send(JSON.stringify({type: 'error', message: error.message}))
+        castError(ws, error.message)
     }
 }
 
-export function handleDisconnect(ws) {
+export function handleDisconnect(ws: WebSocket) {
     roomService.leaveRoom(ws)
 }
