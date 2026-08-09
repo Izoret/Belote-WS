@@ -21,7 +21,7 @@ const startGame = () => {
 }
 
 function selectTeam(teamId) {
-    sendMessage('change_team', {team: teamId})
+    sendMessage('change_team', {newTeam: teamId})
 }
 
 function leaveRoom() {

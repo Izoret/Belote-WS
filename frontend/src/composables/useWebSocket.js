@@ -35,7 +35,7 @@ export function useWebSocket() {
                         store.myId = payload.id
                         break
                     case 'room_update':
-                        store.playersInRoom = payload.players
+                        store.playersInRoom = payload.members
                         store.chatMessages = payload.chat
                         store.isInLobby = true
                         localStorage.setItem('belote_session', JSON.stringify({

@@ -98,11 +98,11 @@ function isRedSuit(suit) {
 }
 
 function takeTrump() {
-    sendMessage('bid_action', {action: 'take'});
+    sendMessage('bid_action', {takeTrumpCard: true});
 }
 
 function passTrump() {
-    sendMessage('bid_action', {action: 'pass'});
+    sendMessage('bid_action', {takeTrumpCard: false});
 }
 
 const currentPlayerName = computed(() => {
@@ -142,7 +142,7 @@ const playedCardsByPosition = computed(() => {
 });
 
 function chooseSuit(suit) {
-    sendMessage('bid_action', {action: suit});
+    sendMessage('bid_action', {takeTrumpCard: true, secondTurnChosenSuit: suit});
 }
 
 function playCard(card) {
@@ -269,8 +269,8 @@ function playCard(card) {
                         :style="{
                         marginLeft: index > 0 ? '-30px' : '0',
                         zIndex: index,
-                        filter: card.unplayable ? 'grayscale(60%)' : 'none',
-                        opacity: card.unplayable ? 0.6 : 1
+                        filter: card.playable ? 'none' : 'grayscale(60%)',
+                        opacity: card.playable ? 1 : 0.6
                         }"
                         class="card-in-hand"
                         @click="playCard(card)"
