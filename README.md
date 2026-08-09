@@ -1,3 +1,0 @@
-# Belote WS
-
-hello
