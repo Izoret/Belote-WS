@@ -34,9 +34,7 @@ export async function startGame(ws: WebSocket) {
             taker: undefined,
         },
         trumpSuit: undefined,
-        tricks: {
-            currentTrick: [],
-        },
+        currentTrick: [],
     }
     room.game = game
 
@@ -148,28 +146,25 @@ export async function playCard(ws: WebSocket, card: Card) {
     if (cardToPlay.unplayable) throw new Error("Card not allowed for current trick !")
 
     player.hand.splice(player.hand.indexOf(cardToPlay), 1)
-    game.tricks.currentTrick.push({card, playerId: ws.id})
+    game.currentTrick.push({card: cardToPlay, byPlayer: game.currentPlayer})
 
     // If trick is not full, pass turn to next player
-    if (game.tricks.currentTrick.length < 4) {
+    if (game.currentTrick.length < 4) {
         const currentPlayerIndex = game.players.findIndex(p => p.id === ws.id)
         const nextPlayerIndex = (currentPlayerIndex + 1) % 4
         game.currentPlayer = game.players[nextPlayerIndex]
     } else {
         // Trick is complete, determine winner
-        const winnerId = beloteLogic.trickMaster(game.tricks.currentTrick, game.trumpSuit).playerId
-        const winner = game.players.find(p => p.id === winnerId)
-
-        if (!winner) throw new Error('Winner not found??')
+        const winner = beloteLogic.trickMaster(game.currentTrick, game.trumpSuit).byPlayer
 
         if (winner.team === 1) console.log("team 1 won the trick !!")
         else console.log("team 2 won the trick!!")
 
-        game.currentPlayer = winnerId; // Winner starts the next trick
+        game.currentPlayer = winner // Winner starts the next trick
         castGameStateIndividually(room)
 
-        await sleep(2500); // Wait for players to see the result
-        game.tricks.currentTrick = []
+        await sleep(2500) // Wait for players to see the result
+        game.currentTrick = []
 
         // Check for end of game (8 tricks played)
         if (player.hand.length === 0) {
@@ -180,13 +175,13 @@ export async function playCard(ws: WebSocket, card: Card) {
     }
 
     game.players.forEach(player => {
-        if (game.tricks.currentTrick.some(play => play.playerId === player.id))
+        if (game.currentTrick.some(play => play.byPlayer.id === player.id))
             player.hand.forEach(card => {
                 card.unplayable = false
             })
         else {
             const cardsAllowed = beloteLogic.cardsAllowedInHandForTrick(
-                player.hand, game.tricks.currentTrick, game.players, game.trumpSuit, player.team,
+                player.hand, game.currentTrick, player.team, game.trumpSuit
             )
 
             player.hand.forEach(card => {

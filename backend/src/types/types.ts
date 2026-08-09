@@ -27,17 +27,19 @@ export type Game = {
         taker?: Player
     },
     trumpSuit?: Suit,
-    tricks: {
-        currentTrick: never[]
-    }
+    currentTrick: CardPlayed[]
 }
 
+export type Value = '7' | '8' | '9' | '10' | 'jack' | 'queen' | 'king' | 'ace'
+export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades'
 export type Card = {
     suit: Suit,
     value: Value
 }
-export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades'
-export type Value = '7' | '8' | '9' | '10' | 'jack' | 'queen' | 'king' | 'ace'
+export type CardPlayed = {
+    card: Card,
+    byPlayer: Player
+}
 
 export type ChatMessage = {
     author: string, // name of player is enough

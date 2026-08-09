@@ -1,4 +1,4 @@
-import {Card, Player, Suit, Value} from '../types/types.js'
+import {Card, CardPlayed, Player, Suit, Value} from '../types/types.js'
 
 export function createDeck(): Card[] {
     const deck: Card[] = []
@@ -53,7 +53,7 @@ function getCardPower(card: Card, trumpSuit: Suit) {
     return isTrump ? valueMap[card.value] : trumpMap[card.value]
 }
 
-export function cardsAllowedInHandForTrick(cards: Card[], trick, players: Player[], trumpSuit?: Suit, team) {
+export function cardsAllowedInHandForTrick(cards: Card[], trick: CardPlayed[], team: number, trumpSuit?: Suit) {
     // code en français pour que je m'y retrouve
     if (!trumpSuit) throw new Error('Trump suit is unset even though tricks have started?')
 
@@ -64,7 +64,7 @@ export function cardsAllowedInHandForTrick(cards: Card[], trick, players: Player
     const cartesCouleurDemandee = cards.filter(card => card.suit === couleurDemandee)
     const atouts = cards.filter(card => card.suit === trumpSuit)
     const playMaitre = trickMaster(trick, trumpSuit)
-    const partenaireEstMaitre = players.find(p => p.id === playMaitre.playerId).team === team
+    const partenaireEstMaitre = playMaitre.byPlayer.team === team
     const surcoupes = atouts.filter(card => getCardPower(card, trumpSuit) > getCardPower(playMaitre.card, trumpSuit))
 
     if (cartesCouleurDemandee.length > 0) {
@@ -102,7 +102,7 @@ export function cardsAllowedInHandForTrick(cards: Card[], trick, players: Player
     }
 }
 
-export function trickMaster(trick, trumpSuit?: Suit) {
+export function trickMaster(trick: CardPlayed[], trumpSuit?: Suit) {
     if (!trick || trick.length === 0 || !trumpSuit) throw Error('fatal: missing trick or trumpsuit data')
 
     let playMaitre = trick[0]

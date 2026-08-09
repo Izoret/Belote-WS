@@ -37,7 +37,7 @@ export function castGameStateIndividually(room: Room) {
             bidding: game.bidding,
             trumpSuit: game.trumpSuit,
             currentPlayerId: game.currentPlayer.id,
-            tricks: game.tricks,
+            tricks: {currentTrick: game.currentTrick},
         }
 
         const myPlayerState = game.players.find(p => p.id === player.id)
