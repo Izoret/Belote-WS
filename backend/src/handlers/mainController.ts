@@ -11,31 +11,31 @@ export async function handleMessage(ws: WebSocket, message: any) {
 
         switch (type) {
             case "join_room":
-                await roomService.joinOrCreateRoom(ws, payload)
+                roomService.joinOrCreateRoom(ws, payload.roomCode, payload.playerName)
                 break
             case "send_message":
-                await chatService.sendChatMessage(ws, payload)
+                chatService.sendChatMessage(ws, payload.text)
                 break
             case "start_game":
-                await gameService.startGame(ws, payload)
+                await gameService.startGame(ws)
                 break
             case "bid_action":
-                await gameService.handleBid(ws, payload)
+                await gameService.handleBid(ws, payload.takeTrumpCard, payload.secondTurnChosenSuit)
                 break
             case 'play_card':
                 await gameService.playCard(ws, payload)
                 break
             case "change_team":
-                await roomService.changeTeam(ws, payload)
+                roomService.changeTeam(ws, payload)
                 break
             case "reconnect":
-                await roomService.reconnect(ws, payload)
+                roomService.reconnect(ws, payload.oldId)
                 break
             case "leave_room":
                 roomService.leaveRoom(ws)
                 break
             case "end_game":
-                gameService.endGame(ws, payload)
+                gameService.endGame(ws)
                 break
             default:
                 castError(ws, 'Type de message non reconnu')

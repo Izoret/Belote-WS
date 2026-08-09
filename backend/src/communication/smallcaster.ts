@@ -1,10 +1,11 @@
 import WebSocket from 'ws'
-import {rooms} from '../state.js'
+import {Room} from '../types/types.js'
+import {getGameSafely} from '../logic/validationLogic.js'
 
 export function castConnectionReady(ws: WebSocket) {
     ws.send(JSON.stringify({
         type: 'connection_ready',
-        payload: {id: ws.id}
+        payload: {id: ws.id},
     }))
 }
 
@@ -19,11 +20,8 @@ export function castInfoToReconnected(ws: WebSocket, roomCode: string, team: num
     }))
 }
 
-export function castGameStateIndividually(roomCode: string) {
-    const room = rooms.get(roomCode)
-    if (!room || !room.game) return
-
-    const fullGameState = room.game
+export function castGameStateIndividually(room: Room) {
+    const fullGameState = getGameSafely(room)
 
     room.players.forEach(player => {
         const clientGameState = {
@@ -35,10 +33,10 @@ export function castGameStateIndividually(roomCode: string) {
                 handSize: p.hand.length,
             })),
             deckSize: fullGameState.deck.length,
-            dealerId: fullGameState.dealerId,
+            dealerId: fullGameState.dealer.id,
             bidding: fullGameState.bidding,
             trumpSuit: fullGameState.trumpSuit,
-            currentPlayerId: fullGameState.currentPlayerId,
+            currentPlayerId: fullGameState.currentPlayer.id,
             tricks: fullGameState.tricks,
         }
 

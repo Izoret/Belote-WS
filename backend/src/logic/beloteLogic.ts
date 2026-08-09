@@ -1,3 +1,5 @@
+import {Player} from '../types/types.js'
+
 export function createDeck() {
     const suits = ['hearts', 'diamonds', 'clubs', 'spades']
     const values = ['7', '8', '9', '10', 'jack', 'queen', 'king', 'ace']
@@ -12,13 +14,13 @@ export function createDeck() {
 
 export function shuffleDeck(deck) {
     for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
+        const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]]
     }
     return deck
 }
 
-export function dealCards(players, deck, count) {
+export function dealCards(players: Player[], deck, count: number) {
     for (const player of players) {
         for (let i = 0; i < count; i++) {
             if (deck.length > 0) {
@@ -53,7 +55,7 @@ function getCardPower(card, trumpSuit) {
     return isTrump ? valueMap[card.value] : trumpMap[card.value]
 }
 
-export function cardsAllowedInHandForTrick(cards, trick, players, trumpSuit, team) {
+export function cardsAllowedInHandForTrick(cards, trick, players: Player[], trumpSuit, team) {
     // code en français pour que je m'y retrouve
 
     if (trick.length === 0) return cards

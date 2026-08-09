@@ -1,9 +1,11 @@
-export function validatePlayerInRoom(room, newPlayer) {
+import {Player, Room} from '../types/types.js'
+
+export function validatePlayerInRoom(room: Room, newPlayer: Player) {
     if (room.players.length >= 4) throw new Error('Le lobby est déjà plein !')
     if (room.players.some(player => player.name === newPlayer.name)) throw new Error('Ce nom est déjà pris dans cette room !')
 }
 
-export function validateTeams(players) {
+export function validateTeams(players: Player[]) {
     if (players.length !== 4) throw new Error('Il faut exactement 4 joueurs pour commencer')
     const team1 = players.filter(p => p.team === 1)
     const team2 = players.filter(p => p.team === 2)
@@ -11,8 +13,7 @@ export function validateTeams(players) {
     return {team1, team2}
 }
 
-export function determinePlayerOrder(players, teams) {
+export function determinePlayerOrder(teams) {
     const {team1, team2} = teams
     return [team1[0], team2[0], team1[1], team2[1]]
 }
-

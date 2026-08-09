@@ -1,7 +1,7 @@
 import {WebSocketServer} from 'ws'
 import {v4 as uuidv4} from 'uuid'
-import {handleDisconnect, handleMessage} from './handlers/mainController.js'
 import {castConnectionReady} from './communication/smallcaster.js'
+import * as controller from './handlers/mainController.js'
 
 const wss = new WebSocketServer({port: 8080})
 
@@ -14,6 +14,6 @@ wss.on('connection', ws => {
 
     console.log(`Client ${ws.id} connecté.`)
 
-    ws.on('message', message => handleMessage(ws, message))
-    ws.on('close', () => handleDisconnect(ws))
+    ws.on('message', message => controller.handleMessage(ws, message))
+    ws.on('close', () => controller.handleDisconnect(ws))
 })

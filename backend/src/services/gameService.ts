@@ -2,40 +2,50 @@ import * as beloteLogic from '../logic/beloteLogic.js'
 import * as playersLogic from '../logic/playersLogic.js'
 import {castGameStateIndividually} from '../communication/smallcaster.js'
 import {broadcastDealingAnimation, broadcastEndGame} from '../communication/broadcaster.js'
-import {getRoomSafely} from '../logic/validationLogic.ts'
+import {getGameSafely, getRoomSafely} from '../logic/validationLogic.js'
+import WebSocket from 'ws'
+import {Game, Player} from '../types/types.js'
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-export async function startGame(ws) {
+export async function startGame(ws: WebSocket) {
     const room = getRoomSafely(ws)
     if (room.game) throw new Error('La partie a déjà commencé')
 
     const teams = playersLogic.validateTeams(room.players)
-    const orderedPlayers = playersLogic.determinePlayerOrder(room.players, teams)
+    const orderedPlayers = playersLogic.determinePlayerOrder(teams)
     const deck = beloteLogic.shuffleDeck(beloteLogic.createDeck())
 
     console.log(`Début de partie dans la room !!`)
 
-    room.game = {
+    const players = orderedPlayers.map(p => ({
+        id: p.id,
+        name: p.name,
+        team: p.team,
+        hand: [],
+        ws: p.ws,
+    }))
+
+    const dealerIndex = players.findIndex(p => p.id === ws.id)
+    const dealer: Player = players[dealerIndex]
+    const firstOneToPlay = (dealerIndex + 1) % 4
+
+    const game: Game = {
         deck,
-        dealerId: ws.id,
-        players: orderedPlayers.map(p => ({
-            id: p.id,
-            name: p.name,
-            team: p.team,
-            hand: [],
-        })),
+        dealer: dealer,
+        players: players,
+        currentPlayer: players[firstOneToPlay],
         bidding: {
             phase: 0,
             trumpCard: null,
             takerId: null,
         },
         trumpSuit: null,
-        currentPlayerId: null,
         tricks: {
             currentTrick: [],
         },
     }
+    room.game = game
 
     castGameStateIndividually(room)
     await sleep(1000)
@@ -56,50 +66,41 @@ export async function startGame(ws) {
     castGameStateIndividually(room)
     await sleep(2000)
 
-    await startBidding(ws, room)
-}
-
-async function startBidding(ws, room) {
-    room.game.bidding.phase = 1
-    const dealerIndex = room.game.players.findIndex(p => p.id === ws.id)
-    const firstBidderIndex = (dealerIndex + 1) % 4
-    room.game.currentPlayerId = room.game.players[firstBidderIndex].id
-
+    game.bidding.phase = 1
     castGameStateIndividually(room)
 }
 
-export async function handleBid(ws, {action}) {
+export async function handleBid(ws: WebSocket, takeTrumpCard: boolean, secondTurnChosenSuit) {
     const room = getRoomSafely(ws)
-    const game = room.game
-    if (!game) throw new Error('Game not found')
-    if (ws.id !== game.currentPlayerId) throw new Error("Not your turn to bid")
+    const game = getGameSafely(room)
+    if (ws.id !== game.currentPlayer.id) throw new Error("Not your turn to bid")
 
     const bidderIndex = game.players.findIndex(p => p.id === ws.id)
     const nextBidder = game.players[(bidderIndex + 1) % 4]
 
     if (game.bidding.phase === 1) {
-        if (action === 'take') {
-            await takeTrumpCard(ws, game, game.bidding.trumpCard.suit)
-        } else if (action === 'pass') {
-            if (game.currentPlayerId === game.dealerId) game.bidding.phase = 2
-            game.currentPlayerId = nextBidder.id
+        if (takeTrumpCard) {
+            await giveTrumpCard(ws, game, game.bidding.trumpCard.suit)
+        } else {
+            if (game.currentPlayer.id === game.dealer.id) game.bidding.phase = 2
+            game.currentPlayer = nextBidder
         }
     } else if (game.bidding.phase === 2) {
-        if (action === 'pass') {
-            if (game.currentPlayerId === game.dealerId) {
+        if (takeTrumpCard) {
+            await giveTrumpCard(ws, game, secondTurnChosenSuit)
+        } else {
+            if (game.currentPlayer.id === game.dealer.id) {
                 endGame(ws) // Everyone passed, end the game
                 return
             }
-            game.currentPlayerId = nextBidder.id
-        } else {
-            await takeTrumpCard(ws, game, action)
+            game.currentPlayer = nextBidder
         }
     }
 
     castGameStateIndividually(room)
 }
 
-async function takeTrumpCard(ws, game, newSuit) {
+async function giveTrumpCard(ws: WebSocket, game: Game, newSuit) {
     const room = getRoomSafely(ws)
 
     const bidder = game.players.find(p => p.id === ws.id)
@@ -113,14 +114,14 @@ async function takeTrumpCard(ws, game, newSuit) {
     await dealFinalCards(ws)
 }
 
-async function dealFinalCards(ws) {
+async function dealFinalCards(ws: WebSocket) {
     const room = getRoomSafely(ws)
-    if (!room.game) return
+    const game = getGameSafely(room)
 
-    const taker = room.game.players.find(p => p.id === room.game.bidding.takerId)
-    room.game.players.forEach(player => {
+    const taker = game.players.find(p => p.id === game.bidding.takerId)
+    game.players.forEach(player => {
         const dealCount = (player.id === taker.id) ? 2 : 3
-        beloteLogic.dealCards([player], room.game.deck, dealCount)
+        beloteLogic.dealCards([player], game.deck, dealCount)
     })
 
     castGameStateIndividually(room)
@@ -130,20 +131,21 @@ async function dealFinalCards(ws) {
     await startTricking(ws)
 }
 
-async function startTricking(ws) {
+async function startTricking(ws: WebSocket) {
     const room = getRoomSafely(ws)
+    const game = getGameSafely(room)
 
-    const dealerIndex = room.game.players.findIndex(p => p.id === room.game.dealerId)
+    const dealerIndex = game.players.findIndex(p => p.id === game.dealer.id)
     const firstPlayerIndex = (dealerIndex + 1) % 4
-    room.game.currentPlayerId = room.game.players[firstPlayerIndex].id
+    game.currentPlayer = game.players[firstPlayerIndex]
 
     castGameStateIndividually(room)
 }
 
-export async function playCard(ws, {card}) {
+export async function playCard(ws: WebSocket, {card}) {
     const room = getRoomSafely(ws)
-    const game = room.game
-    if (!game || ws.id !== game.currentPlayerId) return
+    const game = getGameSafely(room)
+    if (ws.id !== game.currentPlayer.id) return
 
     const player = game.players.find(p => p.id === ws.id)
     const cardServer = player.hand.find(c => c.suit === card.suit && c.value === card.value)
@@ -159,7 +161,7 @@ export async function playCard(ws, {card}) {
     if (game.tricks.currentTrick.length < 4) {
         const currentPlayerIndex = game.players.findIndex(p => p.id === ws.id)
         const nextPlayerIndex = (currentPlayerIndex + 1) % 4
-        game.currentPlayerId = game.players[nextPlayerIndex].id
+        game.currentPlayer = game.players[nextPlayerIndex]
     } else {
         // Trick is complete, determine winner
         const winnerId = beloteLogic.trickMaster(game.tricks.currentTrick, game.trumpSuit).playerId
@@ -168,7 +170,7 @@ export async function playCard(ws, {card}) {
         if (winner.team === 1) console.log("team 1 won the trick !!")
         else console.log("team 2 won the trick!!")
 
-        game.currentPlayerId = winnerId; // Winner starts the next trick
+        game.currentPlayer = winnerId; // Winner starts the next trick
         castGameStateIndividually(room)
 
         await sleep(2500); // Wait for players to see the result
@@ -182,14 +184,14 @@ export async function playCard(ws, {card}) {
         }
     }
 
-    room.game.players.forEach(player => {
+    game.players.forEach(player => {
         if (game.tricks.currentTrick.some(play => play.playerId === player.id))
             player.hand.forEach(card => {
                 card.unplayable = false
             })
         else {
             const cardsAllowed = beloteLogic.cardsAllowedInHandForTrick(
-                player.hand, game.tricks.currentTrick, room.game.players, game.trumpSuit, player.team,
+                player.hand, game.tricks.currentTrick, game.players, game.trumpSuit, player.team,
             )
 
             player.hand.forEach(card => {
@@ -201,12 +203,12 @@ export async function playCard(ws, {card}) {
     castGameStateIndividually(room)
 }
 
-export function endGame(ws) {
+export function endGame(ws: WebSocket) {
     const room = getRoomSafely(ws)
     if (!room.game) throw new Error("Il n'y a pas de partie en cours.")
 
-    console.log(`Partie terminée dans la room.`)
-    room.game = null
+    room.game = undefined
+    console.log(`Partie terminée dans la room ${room.code}.`)
     broadcastEndGame(room)
 }
 
