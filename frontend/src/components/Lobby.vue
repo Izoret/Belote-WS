@@ -45,9 +45,11 @@ watch(
 </script>
 
 <template>
+    <h1>☀️ Lobby {{ store.roomCode.toUpperCase() }} ☀️</h1>
+
     <div class="lobby-container">
         <div class="lobby-info">
-            <h2>Salon : {{ store.roomCode.toUpperCase() }}</h2>
+            <h2>&lt;h2&gt;&lt;/h2&gt;</h2>
 
             <ul class="player-list">
                 <li v-for="player in store.playersInRoom" :key="player.id"

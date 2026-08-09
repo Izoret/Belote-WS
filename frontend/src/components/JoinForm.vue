@@ -18,6 +18,8 @@ const joinRoom = async () => {
 </script>
 
 <template>
+    <h1>☀️ Lobby Belote ☀️</h1>
+
     <div id="join-form">
         <input v-model="store.playerName" placeholder="Pseudo" type="text"/>
         <input id="room-code" v-model="store.roomCode" placeholder="Code du salon" type="text" @keyup.enter="joinRoom"/>

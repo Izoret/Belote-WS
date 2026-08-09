@@ -33,8 +33,6 @@ onMounted(async () => {
 
 <template>
     <div class="container">
-        <h1>☀️ Lobby Belote ☀️</h1>
-
         <Game v-if="store.isInGame"/>
         <Lobby v-else-if="store.isInLobby"/>
         <JoinForm v-else/>
