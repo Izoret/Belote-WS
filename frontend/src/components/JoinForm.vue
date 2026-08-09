@@ -9,7 +9,7 @@ const joinRoom = async () => {
         await connect()
         sendMessage('join_room', {
             playerName: store.playerName,
-            roomCode: store.roomCode.toUpperCase(),
+            roomCode: store.roomCode
         })
     } catch (err) {
         store.errorMessage = 'Impossible de se connecter au serveur : ' + err
