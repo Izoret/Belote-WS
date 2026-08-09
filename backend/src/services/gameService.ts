@@ -2,7 +2,7 @@ import * as beloteLogic from '../logic/beloteLogic.js'
 import * as playersLogic from '../logic/playersLogic.js'
 import {verifyItsMyTurn} from '../logic/playersLogic.js'
 import {castGameStateIndividually} from '../communication/smallcaster.js'
-import {broadcastDealingAnimation, broadcastEndGame} from '../communication/broadcaster.js'
+import {broadcastEndGame} from '../communication/broadcaster.js'
 import {getGameSafely, getRoomSafely, verifyTrumpCardExists} from '../logic/validationLogic.js'
 import WebSocket from 'ws'
 import {Card, Game, Player, Suit} from '../types/types.js'
@@ -45,13 +45,11 @@ export async function startGame(ws: WebSocket) {
     const nb_first_deal = 3
     beloteLogic.dealCards(room.game.players, room.game.deck, nb_first_deal)
     castGameStateIndividually(room)
-    broadcastDealingAnimation(room, nb_first_deal)
     await sleep(2000)
 
     const nb_second_deal = 2
     beloteLogic.dealCards(room.game.players, room.game.deck, nb_second_deal)
     castGameStateIndividually(room)
-    broadcastDealingAnimation(room, nb_second_deal)
     await sleep(2000)
 
     room.game.bidding.trumpCard = room.game.deck.pop()

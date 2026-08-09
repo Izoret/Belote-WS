@@ -1,11 +1,9 @@
 <script setup>
-import {computed, ref, watch} from 'vue';
+import {computed} from 'vue';
 import {store} from '../store.js';
 import {useWebSocket} from '../composables/useWebSocket.js';
 
 const {sendMessage} = useWebSocket();
-
-const dealingCards = ref([]);
 
 // Le but est de toujours nous afficher en bas
 const orderedPlayers = computed(() => {
@@ -32,55 +30,6 @@ const dealerPosition = computed(() => {
     if (!store.game.dealerId || !orderedPlayers.value.length) return null;
     return orderedPlayers.value.findIndex(p => p.id === store.game.dealerId);
 });
-
-watch(() => store.game.dealingAnimation, (newVal) => {
-    if (newVal.active) {
-        startDealingAnimation(newVal.cardCount, newVal.dealerPosition);
-    }
-});
-
-function startDealingAnimation(cardCount, dealerPos) {
-    dealingCards.value = [];
-
-    const positions = [
-        {x: 50, y: 85},  // Nord
-        {x: 85, y: 50},  // Est
-        {x: 50, y: 15},  // Sud
-        {x: 15, y: 50}   // Ouest
-    ];
-
-    const cardSizes = ['85px', '50px', '65px', '50px']; // Sud, Ouest, Nord, Est
-
-    // Créer les cartes volantes
-    for (let i = 0; i < cardCount * 4; i++) {
-        const playerIndex = (dealerPos + Math.floor(i / cardCount) + 1) % 4;
-
-        dealingCards.value.push({
-            id: `card-${Date.now()}-${i}`,
-            start: positions[dealerPos],
-            end: positions[playerIndex],
-            progress: 0,
-            targetSize: cardSizes[playerIndex]
-        });
-    }
-
-    // Animer progressivement
-    let progress = 0;
-    const interval = setInterval(() => {
-        progress += 0.02;
-        dealingCards.value = dealingCards.value.map(card => ({
-            ...card,
-            progress: Math.min(progress, 1)
-        }));
-
-        if (progress >= 1) {
-            clearInterval(interval);
-            setTimeout(() => {
-                dealingCards.value = [];
-            }, 500);
-        }
-    }, 20);
-}
 
 function getSuitSymbol(suit) {
     if (!suit) return '';
@@ -319,22 +268,6 @@ function playCard(card) {
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="flying-cards">
-        <div
-            v-for="card in dealingCards"
-            :key="card.id"
-            :style="{
-                left: `${card.start.x + (card.end.x - card.start.x) * card.progress}%`,
-                top: `${card.start.y + (card.end.y - card.start.y) * card.progress}%`,
-                opacity: card.progress < 0.9 ? 1 : 1 - ((card.progress - 0.9) * 10),
-                width: card.targetSize
-            }"
-            class="flying-card"
-        >
-            <img :src="getCardImage()" class="card-hidden"/>
         </div>
     </div>
 

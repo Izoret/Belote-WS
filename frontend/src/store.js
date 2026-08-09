@@ -19,11 +19,6 @@ export const store = reactive({
         players: [],
         dealerId: null,
         deckSize: 0,
-        dealingAnimation: {
-            active: false,
-            cardCount: 0,
-            dealerPosition: null
-        },
         bidding: {
             phase: 0,
             trumpCard: null,

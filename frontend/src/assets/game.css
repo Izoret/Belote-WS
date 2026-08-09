@@ -315,24 +315,6 @@
     }
 }
 
-/* Animation des cartes volantes */
-.flying-cards {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1000;
-}
-
-.flying-card {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    transition: all 0.1s linear;
-    z-index: 1001;
-}
-
 /* Style du deck */
 .dealer-deck {
     position: absolute;
@@ -659,19 +641,4 @@
     .atout-card {
         width: 50px;
     }
-}
-
-.flying-card {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    transition: none; /* Disable CSS transitions for JS control */
-    z-index: 1001;
-    transform-origin: center;
-}
-
-.flying-card img {
-    width: 100%;
-    height: auto;
-    transform: rotate(var(--rotation, 0deg));
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }

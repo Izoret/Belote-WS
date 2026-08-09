@@ -52,14 +52,6 @@ export function useWebSocket() {
                         }
                         store.game = payload
                         break
-                    case 'dealing_start':
-                        store.game.dealingAnimation = {
-                            active: true,
-                            cardCount: payload.cardCount,
-                            dealerPosition: payload.dealerId === store.myId ? 0 :
-                                store.game.players.findIndex(p => p.id === payload.dealerId)
-                        }
-                        break
                     case 'game_end':
                         store.game = {
                             myHand: [],

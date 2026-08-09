@@ -27,11 +27,3 @@ export function broadcastEndGame(room: Room) {
     broadcast(room, {type: 'game_end', payload: {}})
 }
 
-export function broadcastDealingAnimation(room: Room, cardCount: number) {
-    if (!room.game) return
-    broadcast(room, {
-        type: 'dealing_start',
-        payload: {cardCount, dealerId: room.game.dealer.id},
-    })
-}
-
