@@ -68,9 +68,6 @@ export function useWebSocket() {
                         store.isInGame = false
                         store.isInLobby = true
                         break
-                    case 'f_reconnect':
-                        store.roomCode = payload.roomCode
-                        break
                     case 'error':
                         setErrorMessage(message)
                         break

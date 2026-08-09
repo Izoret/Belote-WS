@@ -6,7 +6,6 @@ import * as smallcaster from '../communication/smallcaster.js'
 import {getRoomSafely, validateJoinRequestInfo} from '../logic/validationLogic.js'
 import WebSocket from 'ws'
 import {Player, Room} from '../types/types.js'
-import {castError} from '../communication/smallcaster.js'
 
 export function joinOrCreateRoom(ws: WebSocket, roomCode: string, playerName: string) {
     validateJoinRequestInfo(roomCode, playerName)
@@ -60,7 +59,7 @@ export function changeTeam(ws: WebSocket, newTeam: number) {
 }
 
 export function reconnect(ws: WebSocket, oldId: string) {
-    if (rooms.size <= 0) castError(ws, "No room anymore so I can't reconnect you sry")
+    if (rooms.size <= 0) smallcaster.castError(ws, "No room anymore so I can't reconnect you sry")
 
     for (const [roomCode, room] of rooms.entries()) {
         const index = room.deadPlayers.findIndex(p => p.id === oldId)
@@ -76,7 +75,11 @@ export function reconnect(ws: WebSocket, oldId: string) {
         console.log(`Joueur ${newPlayer.name} (${ws.id}) reconnecté à la room ${roomCode}`)
 
         broadcaster.broadcastRoomUpdate(room)
-        smallcaster.castInfoToReconnected(ws, roomCode, newPlayer.team)
-        return
+        if (room.game) {
+            room.game.players.find(p => p.id === oldPlayer.id)!.id = newPlayer.id
+            smallcaster.castGameStateIndividually(room)
+        }
+
+        break
     }
 }

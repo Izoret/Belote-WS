@@ -14,13 +14,6 @@ export function castError(ws: WebSocket, error: string) {
     ws.send(JSON.stringify({type: 'error', message: error}))
 }
 
-export function castInfoToReconnected(ws: WebSocket, roomCode: string, team: number) {
-    ws.send(JSON.stringify({
-        type: 'f_reconnect',
-        payload: {roomCode, team}
-    }))
-}
-
 export function castGameStateIndividually(room: Room) {
     const game = getGameSafely(room)
 

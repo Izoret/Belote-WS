@@ -186,6 +186,7 @@ export function endGame(ws: WebSocket) {
     if (!room.game) throw new Error("Il n'y a pas de partie en cours.")
 
     room.game = undefined
+    room.members.forEach(p => p.hand = [])
     console.log(`Partie terminée dans la room ${room.code}.`)
     broadcastEndGame(room)
 }
