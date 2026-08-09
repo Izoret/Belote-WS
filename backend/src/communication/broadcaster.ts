@@ -1,17 +1,17 @@
 import {ChatMessage, Room} from '../types/types.js'
 
 function broadcast(room: Room, message: any) {
-    room.players.forEach(player => {
+    room.members.forEach(player => {
         player.ws.send(JSON.stringify(message))
     })
 }
 
 export function broadcastRoomUpdate(room: Room) {
-    const publicPlayers = room.players.map(p => ({id: p.id, name: p.name, team: p.team}))
+    const publicInfoOfMembers = room.members.map(p => ({id: p.id, name: p.name, team: p.team}))
     const message = {
         type: 'room_update',
         payload: {
-            players: publicPlayers,
+            members: publicInfoOfMembers,
             chat: room.chat,
         },
     }

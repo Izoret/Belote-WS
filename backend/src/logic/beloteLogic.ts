@@ -1,18 +1,17 @@
-import {Player} from '../types/types.js'
+import {Card, Player, Suit, Value} from '../types/types.js'
 
-export function createDeck() {
-    const suits = ['hearts', 'diamonds', 'clubs', 'spades']
-    const values = ['7', '8', '9', '10', 'jack', 'queen', 'king', 'ace']
-    const deck = []
-    for (const suit of suits) {
-        for (const value of values) {
-            deck.push({suit, value})
-        }
-    }
+export function createDeck(): Card[] {
+    const deck: Card[] = []
+
+    const suits: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades']
+    const values: Value[] = ['7', '8', '9', '10', 'jack', 'queen', 'king', 'ace']
+
+    for (const suit of suits) for (const value of values) deck.push({suit, value})
+
     return deck
 }
 
-export function shuffleDeck(deck) {
+export function shuffleDeck(deck: Card[]) {
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]]
@@ -20,17 +19,16 @@ export function shuffleDeck(deck) {
     return deck
 }
 
-export function dealCards(players: Player[], deck, count: number) {
+export function dealCards(players: Player[], deck: Card[], count: number) {
     for (const player of players) {
         for (let i = 0; i < count; i++) {
-            if (deck.length > 0) {
-                player.hand.push(deck.pop())
-            }
+            const card = deck.pop()
+            if (card) player.hand.push(card)
         }
     }
 }
 
-function getCardPower(card, trumpSuit) {
+function getCardPower(card: Card, trumpSuit: Suit) {
     const isTrump = card.suit === trumpSuit
     const valueMap = {
         '7': 0,
@@ -40,7 +38,7 @@ function getCardPower(card, trumpSuit) {
         'queen': 2,
         'king': 3,
         '10': 4,
-        'ace': 5
+        'ace': 5,
     }
     const trumpMap = {
         '7': 6,
@@ -50,13 +48,14 @@ function getCardPower(card, trumpSuit) {
         '10': 10,
         'ace': 11,
         '9': 12,
-        'jack': 13
+        'jack': 13,
     }
     return isTrump ? valueMap[card.value] : trumpMap[card.value]
 }
 
-export function cardsAllowedInHandForTrick(cards, trick, players: Player[], trumpSuit, team) {
+export function cardsAllowedInHandForTrick(cards: Card[], trick, players: Player[], trumpSuit?: Suit, team) {
     // code en français pour que je m'y retrouve
+    if (!trumpSuit) throw new Error('Trump suit is unset even though tricks have started?')
 
     if (trick.length === 0) return cards
 
@@ -103,8 +102,8 @@ export function cardsAllowedInHandForTrick(cards, trick, players: Player[], trum
     }
 }
 
-export function trickMaster(trick, trumpSuit) {
-    if (!trick || trick.length === 0) return null
+export function trickMaster(trick, trumpSuit?: Suit) {
+    if (!trick || trick.length === 0 || !trumpSuit) throw Error('fatal: missing trick or trumpsuit data')
 
     let playMaitre = trick[0]
     for (let i = 1; i < trick.length; i++) {

@@ -1,5 +1,5 @@
 import WebSocket from 'ws'
-import {Room} from '../types/types.js'
+import {Card, Room} from '../types/types.js'
 import {getGameSafely} from '../logic/validationLogic.js'
 
 export function castConnectionReady(ws: WebSocket) {
@@ -21,33 +21,33 @@ export function castInfoToReconnected(ws: WebSocket, roomCode: string, team: num
 }
 
 export function castGameStateIndividually(room: Room) {
-    const fullGameState = getGameSafely(room)
+    const game = getGameSafely(room)
 
-    room.players.forEach(player => {
-        const clientGameState = {
-            myHand: [],
-            players: fullGameState.players.map(p => ({
+    room.members.forEach(player => {
+        const reducedGameState = {
+            myHand: [] as Card[],
+            players: game.players.map(p => ({
                 id: p.id,
                 name: p.name,
                 team: p.team,
                 handSize: p.hand.length,
             })),
-            deckSize: fullGameState.deck.length,
-            dealerId: fullGameState.dealer.id,
-            bidding: fullGameState.bidding,
-            trumpSuit: fullGameState.trumpSuit,
-            currentPlayerId: fullGameState.currentPlayer.id,
-            tricks: fullGameState.tricks,
+            deckSize: game.deck.length,
+            dealerId: game.dealer.id,
+            bidding: game.bidding,
+            trumpSuit: game.trumpSuit,
+            currentPlayerId: game.currentPlayer.id,
+            tricks: game.tricks,
         }
 
-        const myPlayerState = fullGameState.players.find(p => p.id === player.id)
+        const myPlayerState = game.players.find(p => p.id === player.id)
         if (myPlayerState) {
-            clientGameState.myHand = myPlayerState.hand
+            reducedGameState.myHand = myPlayerState.hand
         }
 
         player.ws.send(JSON.stringify({
             type: 'game_state_update',
-            payload: clientGameState,
+            payload: reducedGameState,
         }))
     })
 }

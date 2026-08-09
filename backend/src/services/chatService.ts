@@ -5,7 +5,7 @@ import {getRoomSafely} from '../logic/validationLogic.js'
 export function sendChatMessage(ws: WebSocket, text: string) {
     const room = getRoomSafely(ws)
 
-    const sender = room.players.find(p => p.id === ws.id)
+    const sender = room.members.find(p => p.id === ws.id)
     if (!sender) throw new Error('Joueur non trouvé dans la room')
 
     const now = new Date()

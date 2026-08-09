@@ -23,10 +23,10 @@ export async function handleMessage(ws: WebSocket, message: any) {
                 await gameService.handleBid(ws, payload.takeTrumpCard, payload.secondTurnChosenSuit)
                 break
             case 'play_card':
-                await gameService.playCard(ws, payload)
+                await gameService.playCard(ws, payload.card)
                 break
             case "change_team":
-                roomService.changeTeam(ws, payload)
+                roomService.changeTeam(ws, payload.newTeam)
                 break
             case "reconnect":
                 roomService.reconnect(ws, payload.oldId)

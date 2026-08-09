@@ -1,6 +1,6 @@
 import {rooms} from '../state.js'
 import WebSocket from 'ws'
-import {Room} from '../types/types.js'
+import {Game, Room} from '../types/types.js'
 
 export function validateJoinRequestInfo(roomCode: string, playerName: string) {
     if (!playerName.trim() || !roomCode.trim()) throw new Error('Remplir le formulaire pour rejoindre.')
@@ -17,4 +17,8 @@ export function getGameSafely(room: Room) {
     const game = room.game
     if (!game) throw new Error("Room sans game (pas commencé?)")
     return game
+}
+
+export function verifyTrumpCardExists(game: Game) {
+    if (!game.bidding.trumpCard) throw new Error('Trump card is undefined??')
 }
