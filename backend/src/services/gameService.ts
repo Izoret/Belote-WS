@@ -133,20 +133,23 @@ async function startTricking(ws: WebSocket) {
     castGameStateIndividually(room)
 }
 
-export async function playCard(ws: WebSocket, card: Card) {
+export async function playCard(ws: WebSocket, cardData: Card) {
     const room = getRoomSafely(ws)
     const game = getGameSafely(room)
     verifyItsMyTurn(ws, game)
 
     const player = game.currentPlayer
-    const cardToPlay = player.hand.find(c => c.suit === card.suit && c.value === card.value)
+    const card = player.hand.find(c => c.suit === cardData.suit && c.value === cardData.value)
 
-    if (!cardToPlay) throw new Error("Card not found in hand.")
+    if (!card) throw new Error("Card not found in hand.")
 
-    if (cardToPlay.unplayable) throw new Error("Card not allowed for current trick !")
+    const cardsAllowedInHand = beloteLogic.cardsAllowedInHandForTrick(
+        player.hand, game.currentTrick, player.team, game.trumpSuit,
+    )
+    if (!cardsAllowedInHand.includes(card)) throw new Error("Card not allowed bro.......")
 
-    player.hand.splice(player.hand.indexOf(cardToPlay), 1)
-    game.currentTrick.push({card: cardToPlay, byPlayer: game.currentPlayer})
+    player.hand.splice(player.hand.indexOf(card), 1)
+    game.currentTrick.push({card: card, byPlayer: game.currentPlayer})
 
     // If trick is not full, pass turn to next player
     if (game.currentTrick.length < 4) {
@@ -173,22 +176,6 @@ export async function playCard(ws: WebSocket, card: Card) {
             return
         }
     }
-
-    game.players.forEach(player => {
-        if (game.currentTrick.some(play => play.byPlayer.id === player.id))
-            player.hand.forEach(card => {
-                card.unplayable = false
-            })
-        else {
-            const cardsAllowed = beloteLogic.cardsAllowedInHandForTrick(
-                player.hand, game.currentTrick, player.team, game.trumpSuit
-            )
-
-            player.hand.forEach(card => {
-                card.unplayable = !cardsAllowed.includes(card)
-            })
-        }
-    })
 
     castGameStateIndividually(room)
 }
