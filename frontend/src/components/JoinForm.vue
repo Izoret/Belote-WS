@@ -5,7 +5,6 @@ import {useWebSocket} from '../composables/useWebSocket.js'
 const {connect, sendMessage} = useWebSocket();
 
 const joinRoom = async () => {
-    if (!computedStore.canJoin.value) return
     try {
         await connect()
         sendMessage('join_room', {
@@ -13,7 +12,7 @@ const joinRoom = async () => {
             roomCode: store.roomCode.toUpperCase(),
         })
     } catch (err) {
-        store.errorMessage = 'Impossible de se connecter au serveur.'
+        store.errorMessage = 'Impossible de se connecter au serveur : ' + err
     }
 }
 </script>
@@ -22,7 +21,7 @@ const joinRoom = async () => {
     <div id="join-form">
         <input type="text" v-model="store.playerName" placeholder="Pseudo"/>
         <input type="text" v-model="store.roomCode" placeholder="Code du salon" @keyup.enter="joinRoom" id="room-code"/>
-        <button @click="joinRoom" :disabled="!computedStore.canJoin.value">Rejoindre/Créer salon</button>
+        <button @click="joinRoom" :disabled="!computedStore.joinFormFilled.value">Rejoindre/Créer salon</button>
     </div>
 </template>
 

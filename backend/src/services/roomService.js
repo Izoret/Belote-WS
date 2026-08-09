@@ -4,6 +4,8 @@ import * as broadcaster from '../communication/broadcaster.js'
 import * as smallcaster from '../communication/smallcaster.js'
 
 export function joinRoom(ws, { roomCode, playerName }) {
+    playersLogic.validateJoinRequestInfo(roomCode, playerName)
+
     ws.roomCode = roomCode
 
     if (!rooms.has(roomCode)) {

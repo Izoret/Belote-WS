@@ -41,6 +41,6 @@ export const store = reactive(
 export const computedStore =
 {
     isLobbyFull: computed(() => store.playersInRoom.length === 4),
-    canJoin: computed(() => store.playerName.trim() !== '' && store.roomCode.trim() !== ''),
+    joinFormFilled: computed(() => store.playerName.trim() != '' && store.roomCode.trim() != ''),
 }
 
