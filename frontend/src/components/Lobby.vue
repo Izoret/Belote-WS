@@ -1,6 +1,6 @@
 <script setup>
-import {ref, nextTick, watch} from 'vue'
-import {store, computedStore} from '../store.js'
+import {nextTick, ref, watch} from 'vue'
+import {computedStore, store} from '../store.js'
 import {useWebSocket} from '../composables/useWebSocket.js'
 
 const {sendMessage} = useWebSocket()
@@ -55,11 +55,11 @@ watch(
                     <span class="player-name">✔️ {{ player.name }}</span>
 
                     <div v-if="player.id === store.myId" class="team-selector">
-                        <button @click="selectTeam(1)" :class="{ active: player.team === 1 }"
-                                class="team-btn team-1-btn">Bleu
+                        <button :class="{ active: player.team === 1 }" class="team-btn team-1-btn"
+                                @click="selectTeam(1)">Bleu
                         </button>
-                        <button @click="selectTeam(2)" :class="{ active: player.team === 2 }"
-                                class="team-btn team-2-btn">Rouge
+                        <button :class="{ active: player.team === 2 }" class="team-btn team-2-btn"
+                                @click="selectTeam(2)">Rouge
                         </button>
                     </div>
                 </li>
@@ -68,7 +68,7 @@ watch(
                 </li>
             </ul>
 
-            <button v-if="computedStore.gameReadyToStart.value" @click="startGame" class="start-button">
+            <button v-if="computedStore.gameReadyToStart.value" class="start-button" @click="startGame">
                 Lancer la partie !
             </button>
             <div v-else class="waiting-message">
@@ -87,10 +87,10 @@ watch(
                 </p>
             </div>
             <div class="chat-input">
-                <input type="text" v-model="newMessage" @keyup.enter="postMessage" placeholder="Écrire un message..."/>
+                <input v-model="newMessage" placeholder="Écrire un message..." type="text" @keyup.enter="postMessage"/>
                 <button @click="postMessage">Envoyer</button>
             </div>
-            <button @click="leaveRoom" class="leave-btn">Quitter</button>
+            <button class="leave-btn" @click="leaveRoom">Quitter</button>
         </div>
     </div>
 </template>

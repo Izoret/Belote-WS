@@ -1,9 +1,9 @@
-import { rooms } from '../state.js'
+import {rooms} from '../state.js'
 import * as playersLogic from '../logic/playersLogic.js'
 import * as broadcaster from '../communication/broadcaster.js'
 import * as smallcaster from '../communication/smallcaster.js'
 
-export function joinRoom(ws, { roomCode, playerName }) {
+export function joinRoom(ws, {roomCode, playerName}) {
     playersLogic.validateJoinRequestInfo(roomCode, playerName)
 
     roomCode = roomCode.toUpperCase()
@@ -11,11 +11,11 @@ export function joinRoom(ws, { roomCode, playerName }) {
 
     if (!rooms.has(roomCode)) {
         console.log(`Création du lobby '${roomCode}' !`)
-        rooms.set(roomCode, { players: [], chat: [], deadPlayers: [] })
+        rooms.set(roomCode, {players: [], chat: [], deadPlayers: []})
     }
 
     const room = rooms.get(roomCode)
-    const player = { id: ws.id, name: playerName, team: null, ws: ws }
+    const player = {id: ws.id, name: playerName, team: null, ws: ws}
 
     playersLogic.validatePlayerInRoom(room, player)
     room.players.push(player)
@@ -25,7 +25,7 @@ export function joinRoom(ws, { roomCode, playerName }) {
 }
 
 export function leaveRoom(ws) {
-    const { id, roomCode } = ws
+    const {id, roomCode} = ws
     if (!roomCode || !rooms.has(roomCode)) return
 
     const room = rooms.get(roomCode)
@@ -34,7 +34,7 @@ export function leaveRoom(ws) {
     if (player) {
         room.deadPlayers.push(player)
     }
-    
+
     room.players = room.players.filter(p => p.id !== id)
     console.log(`Client ${id} déconnecté de la room ${roomCode}.`)
 
@@ -46,7 +46,7 @@ export function leaveRoom(ws) {
     }
 }
 
-export function changeTeam(ws, { team }) {
+export function changeTeam(ws, {team}) {
     const room = rooms.get(ws.roomCode)
     if (!room) throw new Error('Room non trouvée')
 
@@ -57,7 +57,7 @@ export function changeTeam(ws, { team }) {
     broadcaster.broadcastRoomUpdate(ws.roomCode)
 }
 
-export function reconnect(ws, { oldId }) {
+export function reconnect(ws, {oldId}) {
     let room, oldPlayer, roomCode
 
     for (const [rc, r] of rooms.entries()) {
@@ -70,7 +70,7 @@ export function reconnect(ws, { oldId }) {
 
     if (!room) return
 
-    const newPlayer = { id: ws.id, name: oldPlayer.name, team: oldPlayer.team, ws: ws }
+    const newPlayer = {id: ws.id, name: oldPlayer.name, team: oldPlayer.team, ws: ws}
     ws.roomCode = roomCode
 
     room.players.push(newPlayer)

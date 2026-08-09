@@ -1,5 +1,5 @@
 <script setup>
-    import {ref, computed, watch} from 'vue';
+import {computed, ref, watch} from 'vue';
 import {store} from '../store.js';
 import {useWebSocket} from '../composables/useWebSocket.js';
 
@@ -9,107 +9,107 @@ const dealingCards = ref([]);
 
 // Le but est de toujours nous afficher en bas
 const orderedPlayers = computed(() => {
-  const players = store.game.players;
-  const myIndex = players.findIndex(p => p.id === store.myId);
+    const players = store.game.players;
+    const myIndex = players.findIndex(p => p.id === store.myId);
 
-  const reordered = []
-  for (let i = 0; i < 4; i++) {
-    reordered.push(players[(myIndex + i) % 4])
-  }
-  return reordered
+    const reordered = []
+    for (let i = 0; i < 4; i++) {
+        reordered.push(players[(myIndex + i) % 4])
+    }
+    return reordered
 })
 
 const getCardImage = (card) => {
-  if (!card) return 'img/cards/hidden.png';
-  else return `img/cards/${card.value}_of_${card.suit}.png`;
+    if (!card) return 'img/cards/hidden.png';
+    else return `img/cards/${card.value}_of_${card.suit}.png`;
 }
 
 function endGame() {
-  sendMessage('end_game', {});
+    sendMessage('end_game', {});
 }
 
 const dealerPosition = computed(() => {
-  if (!store.game.dealerId || !orderedPlayers.value.length) return null;
-  return orderedPlayers.value.findIndex(p => p.id === store.game.dealerId);
+    if (!store.game.dealerId || !orderedPlayers.value.length) return null;
+    return orderedPlayers.value.findIndex(p => p.id === store.game.dealerId);
 });
 
 watch(() => store.game.dealingAnimation, (newVal) => {
-  if (newVal.active) {
-    startDealingAnimation(newVal.cardCount, newVal.dealerPosition);
-  }
+    if (newVal.active) {
+        startDealingAnimation(newVal.cardCount, newVal.dealerPosition);
+    }
 });
 
 function startDealingAnimation(cardCount, dealerPos) {
-  dealingCards.value = [];
+    dealingCards.value = [];
 
-  const positions = [
-    {x: 50, y: 85},  // Nord
-    {x: 85, y: 50},  // Est
-    {x: 50, y: 15},  // Sud
-    {x: 15, y: 50}   // Ouest
-  ];
+    const positions = [
+        {x: 50, y: 85},  // Nord
+        {x: 85, y: 50},  // Est
+        {x: 50, y: 15},  // Sud
+        {x: 15, y: 50}   // Ouest
+    ];
 
-  const cardSizes = ['85px', '50px', '65px', '50px']; // Sud, Ouest, Nord, Est
+    const cardSizes = ['85px', '50px', '65px', '50px']; // Sud, Ouest, Nord, Est
 
-  // Créer les cartes volantes
-  for (let i = 0; i < cardCount * 4; i++) {
-    const playerIndex = (dealerPos + Math.floor(i / cardCount) + 1) % 4;
+    // Créer les cartes volantes
+    for (let i = 0; i < cardCount * 4; i++) {
+        const playerIndex = (dealerPos + Math.floor(i / cardCount) + 1) % 4;
 
-    dealingCards.value.push({
-      id: `card-${Date.now()}-${i}`,
-      start: positions[dealerPos],
-      end: positions[playerIndex],
-      progress: 0,
-      targetSize: cardSizes[playerIndex]
-    });
-  }
-
-  // Animer progressivement
-  let progress = 0;
-  const interval = setInterval(() => {
-    progress += 0.02;
-    dealingCards.value = dealingCards.value.map(card => ({
-      ...card,
-      progress: Math.min(progress, 1)
-    }));
-
-    if (progress >= 1) {
-      clearInterval(interval);
-      setTimeout(() => {
-        dealingCards.value = [];
-      }, 500);
+        dealingCards.value.push({
+            id: `card-${Date.now()}-${i}`,
+            start: positions[dealerPos],
+            end: positions[playerIndex],
+            progress: 0,
+            targetSize: cardSizes[playerIndex]
+        });
     }
-  }, 20);
+
+    // Animer progressivement
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += 0.02;
+        dealingCards.value = dealingCards.value.map(card => ({
+            ...card,
+            progress: Math.min(progress, 1)
+        }));
+
+        if (progress >= 1) {
+            clearInterval(interval);
+            setTimeout(() => {
+                dealingCards.value = [];
+            }, 500);
+        }
+    }, 20);
 }
 
 function getSuitSymbol(suit) {
-  if (!suit) return '';
-  const symbols = {
-    hearts: '♥',
-    diamonds: '♦',
-    clubs: '♣',
-    spades: '♠'
-  };
-  return symbols[suit];
+    if (!suit) return '';
+    const symbols = {
+        hearts: '♥',
+        diamonds: '♦',
+        clubs: '♣',
+        spades: '♠'
+    };
+    return symbols[suit];
 }
 
 function isRedSuit(suit) {
-  return suit === 'hearts' || suit === 'diamonds';
+    return suit === 'hearts' || suit === 'diamonds';
 }
 
 function takeTrump() {
-  sendMessage('bid_action', {action: 'take'});
+    sendMessage('bid_action', {action: 'take'});
 }
 
 function passTrump() {
-  sendMessage('bid_action', {action: 'pass'});
+    sendMessage('bid_action', {action: 'pass'});
 }
 
 const currentPlayerName = computed(() => {
-  const player = store.game.players.find(
-      p => p.id === store.game.currentPlayerId
-  );
-  return player ? player.name : '';
+    const player = store.game.players.find(
+        p => p.id === store.game.currentPlayerId
+    );
+    return player ? player.name : '';
 });
 
 const isMyBidTurn = computed(() =>
@@ -122,35 +122,35 @@ const isMyTurn = computed(() =>
 const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
 
 const playedCardsByPosition = computed(() => {
-  const slots = {south: null, west: null, north: null, east: null};
-  if (!orderedPlayers.value.length) return slots;
+    const slots = {south: null, west: null, north: null, east: null};
+    if (!orderedPlayers.value.length) return slots;
 
-  const positionMap = {
-    [orderedPlayers.value[0].id]: 'south',
-    [orderedPlayers.value[1].id]: 'west',
-    [orderedPlayers.value[2].id]: 'north',
-    [orderedPlayers.value[3].id]: 'east',
-  };
+    const positionMap = {
+        [orderedPlayers.value[0].id]: 'south',
+        [orderedPlayers.value[1].id]: 'west',
+        [orderedPlayers.value[2].id]: 'north',
+        [orderedPlayers.value[3].id]: 'east',
+    };
 
-  store.game.tricks.currentTrick.forEach(playedCard => {
-    const position = positionMap[playedCard.playerId];
-    if (position) {
-      slots[position] = playedCard.card;
-    }
-  });
-  return slots;
+    store.game.tricks.currentTrick.forEach(playedCard => {
+        const position = positionMap[playedCard.playerId];
+        if (position) {
+            slots[position] = playedCard.card;
+        }
+    });
+    return slots;
 });
 
 function chooseSuit(suit) {
-  sendMessage('bid_action', {action: suit});
+    sendMessage('bid_action', {action: suit});
 }
 
 function playCard(card) {
-  if (!isMyTurn.value) {
-    console.log("Not your turn!");
-    return;
-  }
-  sendMessage('play_card', {card});
+    if (!isMyTurn.value) {
+        console.log("Not your turn!");
+        return;
+    }
+    sendMessage('play_card', {card});
 }
 </script>
 
@@ -170,39 +170,39 @@ function playCard(card) {
 
             <div v-if="isMyBidTurn">
                 <div v-if="store.game.bidding.phase === 1" class="bid-actions">
-                    <button @click="takeTrump" class="bid-btn take-btn">Prendre</button>
+                    <button class="bid-btn take-btn" @click="takeTrump">Prendre</button>
                 </div>
                 <div v-else class="suit-selection">
                     <div class="suit-buttons">
                         <button
                             v-for="suit in suits"
                             :key="suit"
-                            @click="chooseSuit(suit)"
-                            class="suit-btn"
                             :class="{
                             'suit-red': isRedSuit(suit),
                             'suit-black': !isRedSuit(suit)
                             }"
-                            >
+                            class="suit-btn"
+                            @click="chooseSuit(suit)"
+                        >
                             {{ getSuitSymbol(suit) }}
                         </button>
                     </div>
                 </div>
-                <button @click="passTrump" class="bid-btn pass-btn">Passer</button>
+                <button class="bid-btn pass-btn" @click="passTrump">Passer</button>
             </div>
         </div>
     </div>
 
-    <button @click="endGame" class="leave-btn">Quitter la partie</button>
+    <button class="leave-btn" @click="endGame">Quitter la partie</button>
 
     <div class="game-board">
         <div
             v-if="store.game.trumpSuit"
-            class="trump-bg-symbol"
             :class="{
             'suit-red': isRedSuit(store.game.trumpSuit),
             'suit-black': !isRedSuit(store.game.trumpSuit)
-            }">
+            }"
+            class="trump-bg-symbol">
             {{ getSuitSymbol(store.game.trumpSuit) }}
         </div>
 
@@ -210,7 +210,7 @@ function playCard(card) {
             <!-- Joueur du haut (cartes inversées) -->
             <div v-if="orderedPlayers.length === 4" class="player-area player-north">
                 <div class="player-info">
-                    <div class="team-indicator" :class="'team-' + orderedPlayers[2].team"></div>
+                    <div :class="'team-' + orderedPlayers[2].team" class="team-indicator"></div>
                     <div class="player-name">{{ orderedPlayers[2].name }}</div>
                 </div>
                 <div class="opponent-hand opponent-hand-north">
@@ -218,16 +218,16 @@ function playCard(card) {
                         v-for="n in orderedPlayers[2].handSize"
                         :key="`north-card-${n}`"
                         :src="getCardImage()"
-                        class="card-hidden card-north"
                         :style="{ marginLeft: n > 1 ? '-40px' : '0' }"
-                        />
+                        class="card-hidden card-north"
+                    />
                 </div>
             </div>
 
             <!-- Joueur de gauche (cartes verticales) -->
             <div v-if="orderedPlayers.length === 4" class="player-area player-west">
                 <div class="player-info">
-                    <div class="team-indicator" :class="'team-' + orderedPlayers[1].team"></div>
+                    <div :class="'team-' + orderedPlayers[1].team" class="team-indicator"></div>
                     <div class="player-name">{{ orderedPlayers[1].name }}</div>
                 </div>
                 <div class="opponent-hand opponent-hand-west">
@@ -235,16 +235,16 @@ function playCard(card) {
                         v-for="n in orderedPlayers[1].handSize"
                         :key="`west-card-${n}`"
                         :src="getCardImage()"
-                        class="card-hidden card-west"
                         :style="{ marginTop: n > 1 ? '-50px' : '0' }"
-                        />
+                        class="card-hidden card-west"
+                    />
                 </div>
             </div>
 
             <!-- Joueur de droite (cartes verticales) -->
             <div v-if="orderedPlayers.length === 4" class="player-area player-east">
                 <div class="player-info">
-                    <div class="team-indicator" :class="'team-' + orderedPlayers[3].team"></div>
+                    <div :class="'team-' + orderedPlayers[3].team" class="team-indicator"></div>
                     <div class="player-name">{{ orderedPlayers[3].name }}</div>
                 </div>
                 <div class="opponent-hand opponent-hand-east">
@@ -252,9 +252,9 @@ function playCard(card) {
                         v-for="n in orderedPlayers[3].handSize"
                         :key="`east-card-${n}`"
                         :src="getCardImage()"
-                        class="card-hidden card-east"
                         :style="{ marginTop: n > 1 ? '-50px' : '0' }"
-                        />
+                        class="card-hidden card-east"
+                    />
                 </div>
             </div>
 
@@ -264,21 +264,21 @@ function playCard(card) {
                     <img
                         v-for="(card, index) in store.game.myHand"
                         :key="index"
+                        :alt="`${card.value} of ${card.suit}`"
                         :src="getCardImage(card)"
-                        class="card-in-hand"
-                        @click="playCard(card)"
                         :style="{
                         marginLeft: index > 0 ? '-30px' : '0',
                         zIndex: index,
                         filter: card.unplayable ? 'grayscale(60%)' : 'none',
                         opacity: card.unplayable ? 0.6 : 1
                         }"
-                        :alt="`${card.value} of ${card.suit}`"
-                        />
+                        class="card-in-hand"
+                        @click="playCard(card)"
+                    />
                 </div>
 
                 <div class="player-info">
-                    <div class="team-indicator" :class="'team-' + orderedPlayers[0].team"></div>
+                    <div :class="'team-' + orderedPlayers[0].team" class="team-indicator"></div>
                     <div class="player-name player-name-me">
                         <strong>{{ orderedPlayers[0].name }} (Vous)</strong>
                     </div>
@@ -288,17 +288,17 @@ function playCard(card) {
             <!-- Centre de la table -->
             <div class="table-center">
                 <div class="center-content">
-                    <div class="atout-section" v-if="store.game.bidding.trumpCard">
+                    <div v-if="store.game.bidding.trumpCard" class="atout-section">
                         <img :src="getCardImage(store.game.bidding.trumpCard)" alt="Carte atout" class="atout-card"/>
                         <div class="atout-info">
                             <p class="atout-text">Atout proposé</p>
                             <div
-                                class="atout-suit"
                                 :class="{
                                 'suit-red': isRedSuit(store.game.bidding.trumpCard?.suit),
                                 'suit-black': !isRedSuit(store.game.bidding.trumpCard?.suit)
                                 }"
-                                >
+                                class="atout-suit"
+                            >
                                 {{ getSuitSymbol(store.game.bidding.trumpCard?.suit) }}
                             </div>
                         </div>
@@ -326,31 +326,31 @@ function playCard(card) {
         <div
             v-for="card in dealingCards"
             :key="card.id"
-            class="flying-card"
             :style="{
                 left: `${card.start.x + (card.end.x - card.start.x) * card.progress}%`,
                 top: `${card.start.y + (card.end.y - card.start.y) * card.progress}%`,
                 opacity: card.progress < 0.9 ? 1 : 1 - ((card.progress - 0.9) * 10),
                 width: card.targetSize
             }"
-            >
+            class="flying-card"
+        >
             <img :src="getCardImage()" class="card-hidden"/>
         </div>
     </div>
 
     <div
         v-if="store.game.deckSize > 0"
-        class="dealer-deck"
         :class="['player-' + ['south', 'west', 'north', 'east'][dealerPosition]]"
-        >
+        class="dealer-deck"
+    >
         <div class="deck-cards">
             <img
                 v-for="n in Math.min(store.game.deckSize, 5)"
                 :key="n"
                 :src="getCardImage()"
-                class="deck-card"
                 :style="{ zIndex: n, left: (n * 5) + 'px' }"
-                />
+                class="deck-card"
+            />
             <div class="deck-count">
                 {{ store.game.deckSize }}
             </div>

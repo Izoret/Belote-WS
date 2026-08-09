@@ -1,7 +1,7 @@
-import { rooms } from '../state.js'
+import {rooms} from '../state.js'
 import * as broadcaster from '../communication/broadcaster.js'
 
-export function sendMessage(ws, { text }) {
+export function sendMessage(ws, {text}) {
     const room = rooms.get(ws.roomCode)
     if (!room) throw new Error('Room non trouvée')
 

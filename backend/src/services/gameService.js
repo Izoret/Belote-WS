@@ -141,45 +141,45 @@ async function startTricking(ws) {
 }
 
 export async function playCard(ws, {card}) {
-    const roomCode = ws.roomCode;
-    const room = rooms.get(roomCode);
-    const game = room.game;
-    if (!game || ws.id !== game.currentPlayerId) return;
+    const roomCode = ws.roomCode
+    const room = rooms.get(roomCode)
+    const game = room.game
+    if (!game || ws.id !== game.currentPlayerId) return
 
-    const player = game.players.find(p => p.id === ws.id);
-    const cardServer = player.hand.find(c => c.suit === card.suit && c.value === card.value);
+    const player = game.players.find(p => p.id === ws.id)
+    const cardServer = player.hand.find(c => c.suit === card.suit && c.value === card.value)
 
-    if (!cardServer) throw new Error("Card not found in hand.");
+    if (!cardServer) throw new Error("Card not found in hand.")
 
     if (cardServer.unplayable) throw new Error("Card not allowed for current trick !")
 
-    player.hand.splice(player.hand.indexOf(cardServer), 1);
-    game.tricks.currentTrick.push({card, playerId: ws.id});
+    player.hand.splice(player.hand.indexOf(cardServer), 1)
+    game.tricks.currentTrick.push({card, playerId: ws.id})
 
     // If trick is not full, pass turn to next player
     if (game.tricks.currentTrick.length < 4) {
-        const currentPlayerIndex = game.players.findIndex(p => p.id === ws.id);
-        const nextPlayerIndex = (currentPlayerIndex + 1) % 4;
-        game.currentPlayerId = game.players[nextPlayerIndex].id;
+        const currentPlayerIndex = game.players.findIndex(p => p.id === ws.id)
+        const nextPlayerIndex = (currentPlayerIndex + 1) % 4
+        game.currentPlayerId = game.players[nextPlayerIndex].id
     } else {
         // Trick is complete, determine winner
         const winnerId = beloteLogic.trickMaster(game.tricks.currentTrick, game.trumpSuit).playerId
-        const winner = game.players.find(p => p.id === winnerId);
+        const winner = game.players.find(p => p.id === winnerId)
 
         if (winner.team === 1) console.log("team 1 won the trick !!")
         else console.log("team 2 won the trick!!")
 
         game.currentPlayerId = winnerId; // Winner starts the next trick
-        broadcaster.broadcastGameState(roomCode);
+        broadcaster.broadcastGameState(roomCode)
 
         await sleep(2500); // Wait for players to see the result
-        game.tricks.currentTrick = [];
+        game.tricks.currentTrick = []
 
         // Check for end of game (8 tricks played)
         if (player.hand.length === 0) {
-            console.log(`8 tricks played. Game over for room ${roomCode}`);
-            endGame(ws);
-            return;
+            console.log(`8 tricks played. Game over for room ${roomCode}`)
+            endGame(ws)
+            return
         }
     }
 
@@ -194,12 +194,12 @@ export async function playCard(ws, {card}) {
             )
 
             player.hand.forEach(card => {
-                card.unplayable = !cardsAllowed.includes(card);
+                card.unplayable = !cardsAllowed.includes(card)
             })
         }
     })
 
-    broadcaster.broadcastGameState(roomCode);
+    broadcaster.broadcastGameState(roomCode)
 }
 
 export function endGame(ws) {

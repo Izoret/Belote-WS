@@ -1,5 +1,5 @@
 <script setup>
-import {store, computedStore} from '../store.js'
+import {computedStore, store} from '../store.js'
 import {useWebSocket} from '../composables/useWebSocket.js'
 
 const {connect, sendMessage} = useWebSocket();
@@ -19,9 +19,9 @@ const joinRoom = async () => {
 
 <template>
     <div id="join-form">
-        <input type="text" v-model="store.playerName" placeholder="Pseudo"/>
-        <input type="text" v-model="store.roomCode" placeholder="Code du salon" @keyup.enter="joinRoom" id="room-code"/>
-        <button @click="joinRoom" :disabled="!computedStore.joinFormFilled.value">Rejoindre/Créer salon</button>
+        <input v-model="store.playerName" placeholder="Pseudo" type="text"/>
+        <input id="room-code" v-model="store.roomCode" placeholder="Code du salon" type="text" @keyup.enter="joinRoom"/>
+        <button :disabled="!computedStore.joinFormFilled.value" @click="joinRoom">Rejoindre/Créer salon</button>
     </div>
 </template>
 

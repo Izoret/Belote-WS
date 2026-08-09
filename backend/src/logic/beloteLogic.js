@@ -1,35 +1,35 @@
 export function createDeck() {
-    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-    const values = ['7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
-    const deck = [];
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades']
+    const values = ['7', '8', '9', '10', 'jack', 'queen', 'king', 'ace']
+    const deck = []
     for (const suit of suits) {
         for (const value of values) {
-            deck.push({suit, value});
+            deck.push({suit, value})
         }
     }
-    return deck;
+    return deck
 }
 
 export function shuffleDeck(deck) {
     for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
+        const j = Math.floor(Math.random() * (i + 1))
+        [deck[i], deck[j]] = [deck[j], deck[i]]
     }
-    return deck;
+    return deck
 }
 
 export function dealCards(players, deck, count) {
     for (const player of players) {
         for (let i = 0; i < count; i++) {
             if (deck.length > 0) {
-                player.hand.push(deck.pop());
+                player.hand.push(deck.pop())
             }
         }
     }
 }
 
 function getCardPower(card, trumpSuit) {
-    const isTrump = card.suit === trumpSuit;
+    const isTrump = card.suit === trumpSuit
     const valueMap = {
         '7': 0,
         '8': 0,
@@ -102,22 +102,22 @@ export function cardsAllowedInHandForTrick(cards, trick, players, trumpSuit, tea
 }
 
 export function trickMaster(trick, trumpSuit) {
-    if (!trick || trick.length === 0) return null;
+    if (!trick || trick.length === 0) return null
 
-    let playMaitre = trick[0];
+    let playMaitre = trick[0]
     for (let i = 1; i < trick.length; i++) {
-        const currentPlay = trick[i];
-        const winningPower = getCardPower(playMaitre.card, trumpSuit);
-        const currentPower = getCardPower(currentPlay.card, trumpSuit);
+        const currentPlay = trick[i]
+        const winningPower = getCardPower(playMaitre.card, trumpSuit)
+        const currentPower = getCardPower(currentPlay.card, trumpSuit)
 
         // A trump card beats a non-trump card
         if (currentPlay.card.suit === trumpSuit && playMaitre.card.suit !== trumpSuit) {
-            playMaitre = currentPlay;
+            playMaitre = currentPlay
         }
         // If both are the same suit, the higher power wins
         else if (currentPlay.card.suit === playMaitre.card.suit) {
             if (currentPower > winningPower) {
-                playMaitre = currentPlay;
+                playMaitre = currentPlay
             }
         }
     }
