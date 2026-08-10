@@ -49,5 +49,5 @@ export type ChatMessage = {
 
 export type WSMessage = {
     type: string
-    payload: unknown
+    payload: any
 }

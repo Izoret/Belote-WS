@@ -4,10 +4,11 @@ import * as gameService from '../services/gameService.js'
 import {endGameIfPanicked} from '../services/gameService.js'
 import WebSocket from 'ws'
 import {castError} from '../communication/smallcaster.js'
+import {WSMessage} from '../types/types.js'
 
 export async function handleMessage(ws: WebSocket, message: any) {
     try {
-        const data = JSON.parse(message)
+        const data: WSMessage = JSON.parse(message)
         const {type, payload} = data
 
         switch (type) {
