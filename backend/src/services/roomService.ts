@@ -34,7 +34,10 @@ export function joinOrCreateRoom(ws: WebSocket, roomCode: string, playerName: st
 export function leaveRoom(ws: WebSocket) {
     const userId = ws.id
 
-    const room = getRoomSafely(ws)
+    if (!ws.roomCode) return
+    const room = rooms.get(ws.roomCode)
+    if (!room) return
+
     const player = room.members.find(p => p.id === userId)
 
     if (player) room.deadPlayers.push(player)
