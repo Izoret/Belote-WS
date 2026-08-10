@@ -1,8 +1,9 @@
 import {ChatMessage, Room} from '../types/types.js'
+import {cast} from './caster.js'
 
 function broadcast(room: Room, message: any) {
     room.members.forEach(player => {
-        player.ws.send(JSON.stringify(message))
+        cast(player.ws, message)
     })
 }
 

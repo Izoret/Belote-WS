@@ -29,7 +29,7 @@ export function useWebSocket() {
 
             socket.onmessage = event => {
                 const data = JSON.parse(event.data)
-                const {type, payload, message} = data
+                const {type, payload} = data
 
                 switch (type) {
                     case 'connection_ready':
@@ -62,7 +62,7 @@ export function useWebSocket() {
                         store.isInLobby = true
                         break
                     case 'error':
-                        showError(message)
+                        showError(payload.message)
                         break
                 }
             }

@@ -46,3 +46,8 @@ export type ChatMessage = {
     text: string
     timestamp: string
 }
+
+export type WSMessage = {
+    type: string
+    payload: unknown
+}

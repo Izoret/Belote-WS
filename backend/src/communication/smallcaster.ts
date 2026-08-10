@@ -2,16 +2,17 @@ import WebSocket from 'ws'
 import {Room} from '../types/types.js'
 import {getGameSafely} from '../logic/validationLogic.js'
 import * as beloteLogic from '../logic/beloteLogic.js'
+import {cast} from './caster.js'
 
 export function castConnectionReady(ws: WebSocket) {
-    ws.send(JSON.stringify({
+    cast(ws, {
         type: 'connection_ready',
         payload: {id: ws.id}
-    }))
+    })
 }
 
 export function castError(ws: WebSocket, error: string) {
-    ws.send(JSON.stringify({type: 'error', message: error}))
+    cast(ws, {type: 'error', payload: {message: error}})
 }
 
 export function castGameStateIndividually(room: Room) {
@@ -47,9 +48,9 @@ export function castGameStateIndividually(room: Room) {
             playable: allowedCards.has(card)
         }))
 
-        member.ws.send(JSON.stringify({
+        cast(member.ws, {
             type: 'game_state_update',
             payload: reducedGameState
-        }))
+        })
     })
 }
