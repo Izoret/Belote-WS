@@ -62,7 +62,7 @@ const isMyTurn = computed(() =>
 const suits = ['hearts', 'diamonds', 'clubs', 'spades']
 
 const playedCardsByPosition = computed(() => {
-    const slots = {south: null, west: null, north: null, east: null}
+    const slots = {}
     if (!orderedPlayers.value.length) return slots
 
     const positionMap = {
@@ -73,7 +73,7 @@ const playedCardsByPosition = computed(() => {
     }
 
     store.game.tricks.currentTrick.forEach(playedCard => {
-        const position = positionMap[playedCard.playerId]
+        const position = positionMap[playedCard.byPlayer.id]
         if (position) {
             slots[position] = playedCard.card
         }
@@ -93,6 +93,8 @@ function playCard(card) {
 </script>
 
 <template>
+    <button class="leave-btn" @click="endGame">Quitter la partie</button>
+
     <div v-if="store.game.currentPlayerId && !store.game.bidding.phase" class="turn-indicator">
         <span v-if="isMyTurn">C'est votre tour !</span>
         <span v-else>Au tour de {{ currentPlayerName }}...</span>
@@ -130,8 +132,6 @@ function playCard(card) {
             </div>
         </div>
     </div>
-
-    <button class="leave-btn" @click="endGame">Quitter la partie</button>
 
     <div class="game-board">
         <div
@@ -201,7 +201,6 @@ function playCard(card) {
                 </div>
             </div>
 
-            <!-- Centre de la table -->
             <div class="table-center">
                 <div class="center-content">
                     <div v-if="store.game.bidding.trumpCard" class="atout-section">
