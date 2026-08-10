@@ -1,14 +1,14 @@
 <script setup>
-import {computed} from 'vue';
-import {store} from '../store.js';
-import {useWebSocket} from '../composables/useWebSocket.js';
+import {computed} from 'vue'
+import {store} from '../store.js'
+import {showError, useWebSocket} from '../composables/useWebSocket.js'
 
-const {sendMessage} = useWebSocket();
+const {sendMessage} = useWebSocket()
 
 // Le but est de toujours nous afficher en bas
 const orderedPlayers = computed(() => {
-    const players = store.game.players;
-    const myIndex = players.findIndex(p => p.id === store.myId);
+    const players = store.game.players
+    const myIndex = players.findIndex(p => p.id === store.myId)
 
     const reordered = []
     for (let i = 0; i < 4; i++) {
@@ -18,48 +18,39 @@ const orderedPlayers = computed(() => {
 })
 
 const getCardImage = (card) => {
-    if (!card) return 'img/cards/hidden.png';
-    else return `img/cards/${card.value}_of_${card.suit}.png`;
+    if (card) return `img/cards/${card.value}_of_${card.suit}.png`
+    else return 'img/cards/hidden.png'
 }
 
 function endGame() {
-    sendMessage('end_game', {});
+    sendMessage('end_game', {})
 }
 
 const dealerPosition = computed(() => {
-    if (!store.game.dealerId || !orderedPlayers.value.length) return null;
-    return orderedPlayers.value.findIndex(p => p.id === store.game.dealerId);
-});
+    if (!store.game.dealerId || !orderedPlayers.value.length) return null
+    return orderedPlayers.value.findIndex(p => p.id === store.game.dealerId)
+})
 
-function getSuitSymbol(suit) {
-    if (!suit) return '';
-    const symbols = {
-        hearts: '♥',
-        diamonds: '♦',
-        clubs: '♣',
-        spades: '♠'
-    };
-    return symbols[suit];
-}
+const suitEmojis = {hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠'}
 
 function isRedSuit(suit) {
-    return suit === 'hearts' || suit === 'diamonds';
+    return suit === 'hearts' || suit === 'diamonds'
 }
 
 function takeTrump() {
-    sendMessage('bid_action', {takeTrumpCard: true});
+    sendMessage('bid_action', {takeTrumpCard: true})
 }
 
 function passTrump() {
-    sendMessage('bid_action', {takeTrumpCard: false});
+    sendMessage('bid_action', {takeTrumpCard: false})
 }
 
 const currentPlayerName = computed(() => {
     const player = store.game.players.find(
         p => p.id === store.game.currentPlayerId
-    );
-    return player ? player.name : '';
-});
+    )
+    return player ? player.name : ''
+})
 
 const isMyBidTurn = computed(() =>
     store.game.bidding.phase && store.game.currentPlayerId === store.myId
@@ -68,38 +59,36 @@ const isMyTurn = computed(() =>
     !store.game.bidding.phase && store.game.currentPlayerId === store.myId
 )
 
-const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+const suits = ['hearts', 'diamonds', 'clubs', 'spades']
 
 const playedCardsByPosition = computed(() => {
-    const slots = {south: null, west: null, north: null, east: null};
-    if (!orderedPlayers.value.length) return slots;
+    const slots = {south: null, west: null, north: null, east: null}
+    if (!orderedPlayers.value.length) return slots
 
     const positionMap = {
         [orderedPlayers.value[0].id]: 'south',
         [orderedPlayers.value[1].id]: 'west',
         [orderedPlayers.value[2].id]: 'north',
-        [orderedPlayers.value[3].id]: 'east',
-    };
+        [orderedPlayers.value[3].id]: 'east'
+    }
 
     store.game.tricks.currentTrick.forEach(playedCard => {
-        const position = positionMap[playedCard.playerId];
+        const position = positionMap[playedCard.playerId]
         if (position) {
-            slots[position] = playedCard.card;
+            slots[position] = playedCard.card
         }
-    });
-    return slots;
-});
+    })
+    return slots
+})
 
 function chooseSuit(suit) {
-    sendMessage('bid_action', {takeTrumpCard: true, secondTurnChosenSuit: suit});
+    sendMessage('bid_action', {takeTrumpCard: true, secondTurnChosenSuit: suit})
 }
 
 function playCard(card) {
-    if (!isMyTurn.value) {
-        console.log("Not your turn!");
-        return;
-    }
-    sendMessage('play_card', {card});
+    if (!isMyTurn.value) showError("Not your turn!")
+    else if (!card.playable) showError("Cette carte ne peut pas être jouée dans cette situation")
+    else sendMessage('play_card', {card})
 }
 </script>
 
@@ -133,7 +122,7 @@ function playCard(card) {
                             class="suit-btn"
                             @click="chooseSuit(suit)"
                         >
-                            {{ getSuitSymbol(suit) }}
+                            {{ suitEmojis[suit] }}
                         </button>
                     </div>
                 </div>
@@ -152,85 +141,63 @@ function playCard(card) {
             'suit-black': !isRedSuit(store.game.trumpSuit)
             }"
             class="trump-bg-symbol">
-            {{ getSuitSymbol(store.game.trumpSuit) }}
+            {{ suitEmojis[store.game.trumpSuit] }}
         </div>
 
         <div class="game-table">
-            <!-- Joueur du haut (cartes inversées) -->
-            <div v-if="orderedPlayers.length === 4" class="player-area player-north">
+            <div class="player-area player-north">
                 <div class="player-info">
                     <div :class="'team-' + orderedPlayers[2].team" class="team-indicator"></div>
-                    <div class="player-name">{{ orderedPlayers[2].name }}</div>
+                    <div class="player-name">{{ orderedPlayers[2].name }} (Équipier)</div>
                 </div>
                 <div class="opponent-hand opponent-hand-north">
-                    <img
-                        v-for="n in orderedPlayers[2].handSize"
-                        :key="`north-card-${n}`"
-                        :src="getCardImage()"
-                        :style="{ marginLeft: n > 1 ? '-40px' : '0' }"
-                        class="card-hidden card-north"
-                    />
+                    <img v-for="n in orderedPlayers[2].handSize" :key="`north-card-${n}`" :src="getCardImage()"
+                         :style="{ marginLeft: n > 1 ? '-40px' : '0' }" class="card-hidden card-north"/>
                 </div>
             </div>
 
-            <!-- Joueur de gauche (cartes verticales) -->
-            <div v-if="orderedPlayers.length === 4" class="player-area player-west">
+            <div class="player-area player-west">
                 <div class="player-info">
                     <div :class="'team-' + orderedPlayers[1].team" class="team-indicator"></div>
                     <div class="player-name">{{ orderedPlayers[1].name }}</div>
                 </div>
                 <div class="opponent-hand opponent-hand-west">
-                    <img
-                        v-for="n in orderedPlayers[1].handSize"
-                        :key="`west-card-${n}`"
-                        :src="getCardImage()"
-                        :style="{ marginTop: n > 1 ? '-50px' : '0' }"
-                        class="card-hidden card-west"
-                    />
+                    <img v-for="n in orderedPlayers[1].handSize" :key="`west-card-${n}`" :src="getCardImage()"
+                         :style="{ marginTop: n > 1 ? '-50px' : '0' }" class="card-hidden card-west"/>
                 </div>
             </div>
 
-            <!-- Joueur de droite (cartes verticales) -->
-            <div v-if="orderedPlayers.length === 4" class="player-area player-east">
+            <div class="player-area player-east">
                 <div class="player-info">
                     <div :class="'team-' + orderedPlayers[3].team" class="team-indicator"></div>
                     <div class="player-name">{{ orderedPlayers[3].name }}</div>
                 </div>
                 <div class="opponent-hand opponent-hand-east">
-                    <img
-                        v-for="n in orderedPlayers[3].handSize"
-                        :key="`east-card-${n}`"
-                        :src="getCardImage()"
-                        :style="{ marginTop: n > 1 ? '-50px' : '0' }"
-                        class="card-hidden card-east"
-                    />
+                    <img v-for="n in orderedPlayers[3].handSize" :key="`east-card-${n}`" :src="getCardImage()"
+                         :style="{ marginTop: n > 1 ? '-50px' : '0' }" class="card-hidden card-east"/>
                 </div>
             </div>
 
-            <!-- Joueur du bas (nous) -->
-            <div v-if="orderedPlayers.length === 4" class="player-area player-south">
-                <div class="my-hand">
-                    <img
-                        v-for="(card, index) in store.game.myHand"
-                        :key="index"
-                        :alt="`${card.value} of ${card.suit}`"
-                        :src="getCardImage(card)"
-                        :style="{
-                        marginLeft: index > 0 ? '-30px' : '0',
-                        zIndex: index,
-                        filter: card.playable ? 'none' : 'grayscale(60%)',
-                        opacity: card.playable ? 1 : 0.6
-                        }"
-                        class="card-in-hand"
-                        @click="playCard(card)"
-                    />
-                </div>
-
+            <div class="player-area player-south">
                 <div class="player-info">
                     <div :class="'team-' + orderedPlayers[0].team" class="team-indicator"></div>
                     <div class="player-name player-name-me">
                         <strong>{{ orderedPlayers[0].name }} (Vous)</strong>
                     </div>
+                </div>
+                <div class="my-hand">
+                    <img v-for="(card, index) in store.game.myHand"
+                         :key="index"
+                         :alt="`${card.value} of ${card.suit}`"
+                         :src="getCardImage(card)"
+                         :style="{
+                             marginLeft: index > 0 ? '-30px' : '0',
+                             zIndex: index,
+                             filter: card.playable ? '' : 'brightness(85%)',
+                         }"
+                         class="card-in-hand"
+                         @click="playCard(card)"
+                    />
                 </div>
             </div>
 
@@ -248,7 +215,7 @@ function playCard(card) {
                                 }"
                                 class="atout-suit"
                             >
-                                {{ getSuitSymbol(store.game.bidding.trumpCard?.suit) }}
+                                {{ suitEmojis[store.game.bidding.trumpCard?.suit] }}
                             </div>
                         </div>
                     </div>

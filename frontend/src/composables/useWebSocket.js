@@ -3,7 +3,8 @@ import {store} from '../store.js'
 let socket = null
 let errorTimeout = null
 
-function setErrorMessage(message) {
+export function showError(message) {
+    console.error(message)
     store.errorMessage = message
     if (errorTimeout) clearTimeout(errorTimeout)
     errorTimeout = setTimeout(() => {
@@ -61,20 +62,18 @@ export function useWebSocket() {
                         store.isInLobby = true
                         break
                     case 'error':
-                        setErrorMessage(message)
+                        showError(message)
                         break
                 }
             }
 
             socket.onclose = () => {
-                console.log('🔌 Déconnecté du serveur WebSocket.')
-                setErrorMessage('Déconnecté du serveur.')
+                showError('Déconnecté du serveur WS.')
                 store.isInLobby = false
             }
 
             socket.onerror = error => {
-                console.error('WebSocket Error:', error)
-                setErrorMessage('Erreur de connexion avec le serveur.')
+                showError('Erreur de connexion avec le serveur : ' + error)
                 reject(error)
             }
         })

@@ -1,6 +1,6 @@
 <script setup>
 import {computedStore, store} from '../store.js'
-import {useWebSocket} from '../composables/useWebSocket.js'
+import {showError, useWebSocket} from '../composables/useWebSocket.js'
 
 const {connect, sendMessage} = useWebSocket();
 
@@ -12,7 +12,7 @@ const joinRoom = async () => {
             roomCode: store.roomCode
         })
     } catch (err) {
-        store.errorMessage = 'Impossible de se connecter au serveur : ' + err
+        showError('Impossible de se connecter au serveur : ' + err)
     }
 }
 </script>

@@ -1,7 +1,7 @@
 <script setup>
 import {onMounted} from 'vue'
 import {store} from './store.js'
-import {useWebSocket} from './composables/useWebSocket.js'
+import {showError, useWebSocket} from './composables/useWebSocket.js'
 import JoinForm from './components/JoinForm.vue'
 import Lobby from './components/Lobby.vue'
 import Game from './components/Game.vue'
@@ -15,7 +15,7 @@ onMounted(async () => {
 
     const {myId} = JSON.parse(session)
     if (!myId) {
-        console.log("Empty session error!!!")
+        showError("Empty session error!!!");
         return
     }
     const myOldId = myId
@@ -26,7 +26,7 @@ onMounted(async () => {
         sendMessage('reconnect', {oldId: myOldId})
     } catch (err) {
         localStorage.removeItem('belote_session')
-        store.errorMessage = "La reconnexion a échoué."
+        showError("La reconnexion a échoué.")
     }
 })
 </script>
