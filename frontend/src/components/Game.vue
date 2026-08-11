@@ -69,7 +69,7 @@ const playedCardsByPosition = computed(() => {
         [orderedPlayers.value[3].id]: 'east'
     }
 
-    store.game.tricks.currentTrick.forEach(playedCard => {
+    store.game.currentTrick.forEach(playedCard => {
         const position = positionMap[playedCard.byPlayer.id]
         if (position) {
             slots[position] = playedCard.card
@@ -94,6 +94,7 @@ function playCard(card) {
 
     <div class="info-panel">
         <div v-if="!isMyTurn">
+            <h2 v-if="store.game.currentTrick.length === 4">{{ currentPlayerName }} vient de gagner!!</h2>
             <h3>Au tour de {{ currentPlayerName }}...</h3>
         </div>
         <div v-else-if="store.game.bidding.phase">

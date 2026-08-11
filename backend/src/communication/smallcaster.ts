@@ -18,6 +18,8 @@ export function castError(ws: WebSocket, error: string) {
 export function castGameStateIndividually(room: Room) {
     const game = getGameSafely(room)
 
+    const lastTrick = game.tricks[game.tricks?.length - 1]
+
     room.members.forEach(member => {
         const reducedGameState = {
             myHand: [] as any[],
@@ -32,15 +34,15 @@ export function castGameStateIndividually(room: Room) {
             bidding: game.bidding,
             trumpSuit: game.trumpSuit,
             currentPlayerId: game.currentPlayer.id,
-            tricks: {currentTrick: game.currentTrick}
+            currentTrick: lastTrick
         }
 
         const playerState = game.players.find(p => p.id === member.id)
         if (!playerState) throw new Error('Player not found in game')
 
         const allowedCards = new Set(
-            (game.currentTrick.length > 0)
-                ? beloteLogic.cardsAllowedInHandForTrick(playerState.hand, game.currentTrick, playerState.team, game.trumpSuit)
+            (lastTrick.length > 0)
+                ? beloteLogic.cardsAllowedInHandForTrick(playerState.hand, lastTrick, playerState.team, game.trumpSuit)
                 : playerState.hand
         )
         reducedGameState.myHand = playerState.hand.map(card => ({

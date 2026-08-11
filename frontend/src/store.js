@@ -26,9 +26,7 @@ export const store = reactive({
         },
         currentPlayerId: null,
         trumpSuit: null,
-        tricks: {
-            currentTrick: []
-        }
+        currentTrick: []
     },
 })
 

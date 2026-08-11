@@ -1,7 +1,7 @@
-import {ChatMessage, Room} from '../types/types.js'
+import {ChatMessage, Room, WSMessage} from '../types/types.js'
 import {cast} from './caster.js'
 
-function broadcast(room: Room, message: any) {
+function broadcast(room: Room, message: WSMessage) {
     room.members.forEach(player => {
         cast(player.ws, message)
     })
@@ -13,8 +13,8 @@ export function broadcastRoomUpdate(room: Room) {
         type: 'room_update',
         payload: {
             members: publicInfoOfMembers,
-            chat: room.chat,
-        },
+            chat: room.chat
+        }
     }
     broadcast(room, message)
 }

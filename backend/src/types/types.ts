@@ -27,8 +27,9 @@ export type Game = {
         taker?: Player
     }
     trumpSuit?: Suit
-    currentTrick: CardPlayed[]
+    tricks: Trick[]
 }
+export type Trick = CardPlayed[]
 
 export type Value = '7' | '8' | '9' | '10' | 'jack' | 'queen' | 'king' | 'ace'
 export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades'

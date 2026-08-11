@@ -5,7 +5,7 @@ import {castGameStateIndividually} from '../communication/smallcaster.js'
 import {broadcastEndGame} from '../communication/broadcaster.js'
 import {getGameSafely, getRoomSafely, verifyTrumpCardExists} from '../logic/validationLogic.js'
 import WebSocket from 'ws'
-import {Card, Game, Player, Suit} from '../types/types.js'
+import {Card, CardPlayed, Game, Player, Suit} from '../types/types.js'
 import {rooms} from '../state.js'
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
@@ -32,10 +32,10 @@ export async function startGame(ws: WebSocket) {
         bidding: {
             phase: 0,
             trumpCard: undefined,
-            taker: undefined,
+            taker: undefined
         },
         trumpSuit: undefined,
-        currentTrick: [],
+        tricks: []
     }
     room.game = game
 
@@ -125,6 +125,8 @@ async function startTricking(ws: WebSocket) {
     const room = getRoomSafely(ws)
     const game = getGameSafely(room)
 
+    game.tricks.push([] satisfies CardPlayed[])
+
     const dealerIndex = game.players.findIndex(p => p.id === game.dealer.id)
     const firstPlayerIndex = (dealerIndex + 1) % 4
     game.currentPlayer = game.players[firstPlayerIndex]
@@ -142,37 +144,38 @@ export async function playCard(ws: WebSocket, cardData: Card) {
 
     if (!card) throw new Error("Card not found in hand.")
 
+    const currentTrick = game.tricks[game.tricks.length - 1]
+
     const cardsAllowedInHand = beloteLogic.cardsAllowedInHandForTrick(
-        player.hand, game.currentTrick, player.team, game.trumpSuit,
+        player.hand, currentTrick, player.team, game.trumpSuit
     )
     if (!cardsAllowedInHand.includes(card)) throw new Error("Card not allowed bro.......")
 
     player.hand.splice(player.hand.indexOf(card), 1)
-    game.currentTrick.push({card: card, byPlayer: game.currentPlayer})
+    currentTrick.push({card: card, byPlayer: game.currentPlayer})
 
-    // If trick is not full, pass turn to next player
-    if (game.currentTrick.length < 4) {
+    if (currentTrick.length < 4) {
         const currentPlayerIndex = game.players.findIndex(p => p.id === ws.id)
         const nextPlayerIndex = (currentPlayerIndex + 1) % 4
         game.currentPlayer = game.players[nextPlayerIndex]
     } else {
-        // Trick is complete, determine winner
-        const winner = beloteLogic.trickMaster(game.currentTrick, game.trumpSuit).byPlayer
+        const winner = beloteLogic.trickMaster(currentTrick, game.trumpSuit).byPlayer
 
-        if (winner.team === 1) console.log("team 1 won the trick !!")
-        else console.log("team 2 won the trick!!")
-
-        game.currentPlayer = winner // Winner starts the next trick
         castGameStateIndividually(room)
 
-        await sleep(2500) // Wait for players to see the result
-        game.currentTrick = []
+        await sleep(2000)
 
-        // Check for end of game (8 tricks played)
-        if (player.hand.length === 0) {
+        game.currentPlayer = winner
+        castGameStateIndividually(room)
+
+        await sleep(1500)
+
+        if (game.tricks.length === 8) {
             console.log(`8 tricks played. Game over for room.`)
             endGame(ws)
             return
+        } else {
+            game.tricks.push([])
         }
     }
 
