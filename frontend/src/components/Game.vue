@@ -52,11 +52,8 @@ const currentPlayerName = computed(() => {
     return player ? player.name : ''
 })
 
-const isMyBidTurn = computed(() =>
-    store.game.bidding.phase && store.game.currentPlayerId === store.myId
-)
 const isMyTurn = computed(() =>
-    !store.game.bidding.phase && store.game.currentPlayerId === store.myId
+    store.game.currentPlayerId === store.myId
 )
 
 const suits = ['hearts', 'diamonds', 'clubs', 'spades']
@@ -95,43 +92,39 @@ function playCard(card) {
 <template>
     <button class="leave-btn" @click="endGame">Quitter la partie</button>
 
-    <div v-if="store.game.currentPlayerId && !store.game.bidding.phase" class="turn-indicator">
-        <span v-if="isMyTurn">C'est votre tour !</span>
-        <span v-else>Au tour de {{ currentPlayerName }}...</span>
-    </div>
-
-    <div v-if="store.game.bidding.phase" class="bidding-overlay">
-        <div class="bidding-panel">
-            <h3 v-if="isMyBidTurn">
-                <span v-if="store.game.bidding.phase === 1">Voulez-vous prendre l'atout ?</span>
-                <span v-else>Voulez-vous choisir un autre atout ?</span>
-            </h3>
-            <h3 v-else>En attente de {{ currentPlayerName }}...</h3>
-
-            <div v-if="isMyBidTurn">
-                <div v-if="store.game.bidding.phase === 1" class="bid-actions">
-                    <button class="bid-btn take-btn" @click="takeTrump">Prendre</button>
-                </div>
-                <div v-else class="suit-selection">
-                    <div class="suit-buttons">
-                        <button
-                            v-for="suit in suits"
-                            :key="suit"
-                            :class="{
+    <div class="info-panel">
+        <div v-if="!isMyTurn">
+            <h3>Au tour de {{ currentPlayerName }}...</h3>
+        </div>
+        <div v-else-if="store.game.bidding.phase">
+            <h3 v-if="store.game.bidding.phase === 1">Voulez-vous prendre l'atout ?</h3>
+            <h3 v-else>Voulez-vous choisir un autre atout ?</h3>
+            <div v-if="store.game.bidding.phase === 1" class="bid-actions">
+                <button class="bid-btn take-btn" @click="takeTrump">Prendre</button>
+            </div>
+            <div v-else class="suit-selection">
+                <div class="suit-buttons">
+                    <button
+                        v-for="suit in suits"
+                        :key="suit"
+                        :class="{
                             'suit-red': isRedSuit(suit),
                             'suit-black': !isRedSuit(suit)
                             }"
-                            class="suit-btn"
-                            @click="chooseSuit(suit)"
-                        >
-                            {{ suitEmojis[suit] }}
-                        </button>
-                    </div>
+                        class="suit-btn"
+                        @click="chooseSuit(suit)"
+                    >
+                        {{ suitEmojis[suit] }}
+                    </button>
                 </div>
-                <button class="bid-btn pass-btn" @click="passTrump">Passer</button>
             </div>
+            <button class="bid-btn pass-btn" @click="passTrump">Passer</button>
+        </div>
+        <div v-else>
+            <h3>C'est votre tour !</h3>
         </div>
     </div>
+    <div v-if="!isMyTurn" class="overlay-darken"/>
 
     <div class="game-board">
         <div
