@@ -3,7 +3,7 @@ import * as chatService from '../services/chatService.js'
 import * as gameService from '../services/gameService.js'
 import {endGameIfPanicked} from '../services/gameService.js'
 import WebSocket from 'ws'
-import {castError} from '../communication/smallcaster.js'
+import {castError} from './smallcaster.js'
 import {WSMessage} from '../types/types.js'
 
 export async function handleMessage(ws: WebSocket, message: any) {

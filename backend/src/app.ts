@@ -1,7 +1,7 @@
 import {WebSocketServer} from 'ws'
 import {v4 as uuidv4} from 'uuid'
 import {castConnectionReady} from './communication/smallcaster.js'
-import * as controller from './handlers/mainController.js'
+import * as controller from './communication/controller.js'
 
 const wss = new WebSocketServer({port: 8080})
 
