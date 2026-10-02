@@ -20,4 +20,4 @@ RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist
 
-CMD ["node", "dist/app.ts"]
+CMD ["node", "dist/app.js"]
