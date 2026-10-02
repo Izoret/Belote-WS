@@ -5,7 +5,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY . .
+COPY index.html vite.config.js ./
+COPY public ./public
+COPY src ./src
 
 ARG VITE_SERVER_WS_URL=/ws
 ENV VITE_SERVER_WS_URL=${VITE_SERVER_WS_URL}
